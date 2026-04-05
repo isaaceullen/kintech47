@@ -15,19 +15,22 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [name, setName] = useState(initialData?.name || '');
   const [category, setCategory] = useState(initialData?.category || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [costPrice, setCostPrice] = useState(initialData?.cost_price || 0);
-  const [pixPrice, setPixPrice] = useState(initialData?.pix_price || 0);
-  const [cardPrice, setCardPrice] = useState(initialData?.card_price || 0);
-  const [isOutOfStock, setIsOutOfStock] = useState(initialData?.is_out_of_stock || false);
+  const [costPrice, setCostPrice] = useState(Number(initialData?.cost_price || 0));
+  const [pixPrice, setPixPrice] = useState(Number(initialData?.pix_price || 0));
+  const [cardPrice, setCardPrice] = useState(Number(initialData?.card_price || 0));
+  const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialData?.is_out_of_stock));
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
-  const safeImages = Array.isArray(initialData?.image_urls) ? initialData.image_urls : [];
   const [imageUrls, setImageUrls] = useState<string[]>(() => {
-    return [
-      safeImages[0] || '',
-      safeImages[1] || '',
-      safeImages[2] || ''
-    ];
+    let safeImages = ['', '', ''];
+    if (initialData?.image_urls && Array.isArray(initialData.image_urls)) {
+      safeImages = [
+        initialData.image_urls[0] || '',
+        initialData.image_urls[1] || '',
+        initialData.image_urls[2] || ''
+      ];
+    }
+    return safeImages;
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
 
