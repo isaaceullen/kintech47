@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { generateSKU } from '@/lib/geminiService';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { name, category } = await request.json();
