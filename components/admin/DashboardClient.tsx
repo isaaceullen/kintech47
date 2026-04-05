@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DollarSign, TrendingUp, Package } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function DashboardClient({ initialMetrics }: { initialMetrics: { totalSales: number, totalProfit: number, productsInStock: number } }) {
+  const router = useRouter();
   const [metrics, setMetrics] = useState(initialMetrics);
   const [isSaving, setIsSaving] = useState(false);
   const [salesInput, setSalesInput] = useState(initialMetrics.totalSales);
   const [profitInput, setProfitInput] = useState(initialMetrics.totalProfit);
+
+  // Update local state if initialMetrics change (e.g. after refresh)
+  useEffect(() => {
+    setMetrics(initialMetrics);
+    setSalesInput(initialMetrics.totalSales);
+    setProfitInput(initialMetrics.totalProfit);
+  }, [initialMetrics]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -36,6 +45,7 @@ export default function DashboardClient({ initialMetrics }: { initialMetrics: { 
       }));
       
       alert('Métricas atualizadas com sucesso!');
+      router.refresh();
     } catch (error) {
       console.error('Error updating metrics:', error);
       alert('Erro ao atualizar métricas. Verifique se a tabela dashboard_settings existe.');

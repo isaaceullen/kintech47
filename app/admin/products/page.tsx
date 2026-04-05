@@ -1,16 +1,36 @@
 import Link from 'next/link';
 import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
-import { getProducts } from '@/lib/api';
 import Image from 'next/image';
+import { createClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminProducts() {
-  const products = await getProducts();
+  const supabase = await createClient();
+  
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching products:', error);
+  }
+
+  const productList = products || [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
+  };
+
+  const getImageUrl = (product: any) => {
+    if (Array.isArray(product.image_urls) && product.image_urls.length > 0 && typeof product.image_urls[0] === 'string' && product.image_urls[0].startsWith('http')) {
+      return product.image_urls[0];
+    }
+    return 'https://via.placeholder.com/400';
   };
 
   return (
@@ -39,7 +59,7 @@ export default async function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => {
+              {productList.map((product) => {
                 const profit = product.pix_price - product.cost_price;
                 const margin = product.cost_price > 0 ? (profit / product.cost_price) * 100 : 0;
                 
@@ -48,7 +68,7 @@ export default async function AdminProducts() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded overflow-hidden bg-background-tertiary">
-                          <Image src={(product.image_urls && product.image_urls.length > 0) ? product.image_urls[0] : `https://picsum.photos/seed/${product.sku}/100/100`} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                          <Image src={getImageUrl(product)} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
                         </div>
                         <div>
                           <p className="font-medium text-text-main line-clamp-1">{product.name}</p>
@@ -59,10 +79,10 @@ export default async function AdminProducts() {
                     <td className="p-4 text-sm text-text-main">{product.sku}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${product.is_out_of_stock || product.stock_quantity <= 0 ? 'text-danger' : 'text-text-main'}`}>
-                          {product.stock_quantity}
+                        <span className={`text-sm font-medium ${product.is_out_of_stock ? 'text-danger' : 'text-success'}`}>
+                          {product.is_out_of_stock ? 'Esgotado' : 'Em Estoque'}
                         </span>
-                        {(product.is_out_of_stock || product.stock_quantity <= 0) && (
+                        {product.is_out_of_stock && (
                           <span title="Esgotado">
                             <AlertCircle className="w-4 h-4 text-danger" />
                           </span>
@@ -86,6 +106,13 @@ export default async function AdminProducts() {
                   </tr>
                 );
               })}
+              {productList.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-text-support">
+                    Nenhum produto encontrado.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

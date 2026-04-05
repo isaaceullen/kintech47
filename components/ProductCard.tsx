@@ -22,6 +22,13 @@ export default function ProductCard({ product }: { product: Product }) {
     addItem(product);
   };
 
+  const getImageUrl = (product: Product) => {
+    if (Array.isArray(product.image_urls) && product.image_urls.length > 0 && typeof product.image_urls[0] === 'string' && product.image_urls[0].startsWith('http')) {
+      return product.image_urls[0];
+    }
+    return 'https://via.placeholder.com/400';
+  };
+
   return (
     <Link href={`/${product.sku}`} className="group flex flex-col bg-background-secondary rounded-xl overflow-hidden border border-background-tertiary hover:border-primary transition-colors duration-300 relative">
       {product.is_out_of_stock && (
@@ -32,7 +39,7 @@ export default function ProductCard({ product }: { product: Product }) {
       
       <div className="relative aspect-square w-full overflow-hidden bg-background-tertiary">
         <Image
-          src={(product.image_urls && product.image_urls.length > 0) ? product.image_urls[0] : `https://picsum.photos/seed/${product.sku}/400/400`}
+          src={getImageUrl(product)}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"

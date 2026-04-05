@@ -18,7 +18,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [costPrice, setCostPrice] = useState(initialData?.cost_price || 0);
   const [pixPrice, setPixPrice] = useState(initialData?.pix_price || 0);
   const [cardPrice, setCardPrice] = useState(initialData?.card_price || 0);
-  const [stockQuantity, setStockQuantity] = useState(initialData?.stock_quantity || 0);
+  const [isOutOfStock, setIsOutOfStock] = useState(initialData?.is_out_of_stock || false);
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
   const [imageUrls, setImageUrls] = useState<string[]>(() => {
@@ -122,10 +122,9 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         cost_price: costPrice,
         pix_price: pixPrice,
         card_price: cardPrice,
-        stock_quantity: stockQuantity,
         image_urls: finalImageUrls,
         external_link: externalLink,
-        is_out_of_stock: stockQuantity <= 0,
+        is_out_of_stock: isOutOfStock,
       };
 
       let error;
@@ -248,14 +247,24 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-text-support mb-2">Quantidade em Estoque</label>
-          <input 
-            type="number" 
-            required
-            value={stockQuantity}
-            onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
-            className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-          />
+          <label className="block text-sm font-medium text-text-support mb-2">Status de Estoque</label>
+          <div className="flex items-center h-10">
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only"
+                  checked={isOutOfStock}
+                  onChange={(e) => setIsOutOfStock(e.target.checked)}
+                />
+                <div className={`block w-14 h-8 rounded-full transition-colors ${isOutOfStock ? 'bg-danger' : 'bg-success'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isOutOfStock ? 'transform translate-x-6' : ''}`}></div>
+              </div>
+              <div className="ml-3 text-sm font-medium text-text-main">
+                {isOutOfStock ? 'Esgotado' : 'Em Estoque'}
+              </div>
+            </label>
+          </div>
         </div>
 
         <div>

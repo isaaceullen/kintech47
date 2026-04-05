@@ -6,7 +6,8 @@ import Image from 'next/image';
 export default function ProductGallery({ images, sku, name, isOutOfStock }: { images: string[], sku: string, name: string, isOutOfStock: boolean }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  const displayImages = images && images.length > 0 ? images : [`https://picsum.photos/seed/${sku}/800/800`];
+  const validImages = Array.isArray(images) ? images.filter(img => typeof img === 'string' && img.startsWith('http')) : [];
+  const displayImages = validImages.length > 0 ? validImages : ['https://via.placeholder.com/800'];
 
   return (
     <div className="flex flex-col gap-4">

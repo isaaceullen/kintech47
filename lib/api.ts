@@ -12,7 +12,6 @@ const MOCK_PRODUCTS: Product[] = [
     cost_price: 2500,
     pix_price: 3500,
     card_price: 3800,
-    stock_quantity: 10,
     image_urls: ['https://picsum.photos/seed/smartphone/400/400'],
     is_out_of_stock: false,
   },
@@ -26,7 +25,6 @@ const MOCK_PRODUCTS: Product[] = [
     cost_price: 400,
     pix_price: 800,
     card_price: 850,
-    stock_quantity: 5,
     image_urls: ['https://picsum.photos/seed/headphones/400/400'],
     is_out_of_stock: false,
   },
@@ -40,7 +38,6 @@ const MOCK_PRODUCTS: Product[] = [
     cost_price: 600,
     pix_price: 1200,
     card_price: 1300,
-    stock_quantity: 0,
     image_urls: ['https://picsum.photos/seed/smartwatch/400/400'],
     is_out_of_stock: true,
   }
