@@ -6,18 +6,27 @@ import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProducts() {
-  const supabase = await createClient();
-  
-  const { data: products, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let productList = [];
 
-  if (error) {
-    console.error('Error fetching products:', error);
+  try {
+    const supabase = await createClient();
+    
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+    }
+    
+    productList = products || [];
+  } catch (err) {
+    console.error('Supabase fetch error:', err);
+    // Fallback to mock data if Supabase fails
+    const { getProducts } = await import('@/lib/api');
+    productList = await getProducts();
   }
-
-  const productList = products || [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

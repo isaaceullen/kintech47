@@ -21,12 +21,12 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [isOutOfStock, setIsOutOfStock] = useState(initialData?.is_out_of_stock || false);
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
+  const safeImages = Array.isArray(initialData?.image_urls) ? initialData.image_urls : [];
   const [imageUrls, setImageUrls] = useState<string[]>(() => {
-    const initial = Array.isArray(initialData?.image_urls) ? initialData.image_urls : [];
     return [
-      typeof initial[0] === 'string' ? initial[0] : '',
-      typeof initial[1] === 'string' ? initial[1] : '',
-      typeof initial[2] === 'string' ? initial[2] : ''
+      safeImages[0] || '',
+      safeImages[1] || '',
+      safeImages[2] || ''
     ];
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -112,7 +112,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
     try {
       const supabase = createClient();
       
-      const finalImageUrls = imageUrls.filter(url => url.trim() !== '');
+      const finalImageUrls = imageUrls?.filter(url => url && typeof url === 'string' && url.trim() !== '') || [];
 
       const productData = {
         sku,

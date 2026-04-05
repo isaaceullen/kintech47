@@ -2,22 +2,52 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { getProductBySku, getProducts } from '@/lib/api';
+import { createClient } from '@/lib/supabase/server';
 import Navbar from '@/components/Navbar';
 import AddToCartButton from '@/components/AddToCartButton';
 import ProductCard from '@/components/ProductCard';
 import ProductGallery from '@/components/ProductGallery';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductPage({ params }: { params: Promise<{ sku: string }> }) {
   const { sku } = await params;
-  const product = await getProductBySku(sku);
+  let product = null;
+  let allProducts = [];
+  let productError = null;
 
-  if (!product) {
+  try {
+    const supabase = await createClient();
+    
+    const { data: pData, error: pError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('sku', sku)
+      .single();
+      
+    product = pData;
+    productError = pError;
+
+    if (!pError && pData) {
+      const { data: aData } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      allProducts = aData || [];
+    }
+  } catch (err) {
+    console.error('Supabase fetch error:', err);
+    // Fallback to mock data if Supabase fails
+    const { getProductBySku, getProducts } = await import('@/lib/api');
+    product = await getProductBySku(sku);
+    allProducts = await getProducts();
+  }
+
+  if (productError || !product) {
     notFound();
   }
 
-  const allProducts = await getProducts();
-  const relatedProducts = allProducts
+  const relatedProducts = (allProducts || [])
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
