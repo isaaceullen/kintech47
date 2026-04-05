@@ -15,7 +15,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
-              src="https://i.imgur.com/o2m4oj2.png"
+              src="https://i.imgur.com/7Zn0fr7.png"
               alt="Logo"
               width={120}
               height={40}
