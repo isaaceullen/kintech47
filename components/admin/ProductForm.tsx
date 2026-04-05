@@ -22,11 +22,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
   const [imageUrls, setImageUrls] = useState<string[]>(() => {
-    const initial = initialData?.image_urls || [];
+    const initial = Array.isArray(initialData?.image_urls) ? initialData.image_urls : [];
     return [
-      initial[0] || '',
-      initial[1] || '',
-      initial[2] || ''
+      typeof initial[0] === 'string' ? initial[0] : '',
+      typeof initial[1] === 'string' ? initial[1] : '',
+      typeof initial[2] === 'string' ? initial[2] : ''
     ];
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
