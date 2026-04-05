@@ -32,7 +32,7 @@ export default function ProductCard({ product }: { product: Product }) {
       
       <div className="relative aspect-square w-full overflow-hidden bg-background-tertiary">
         <Image
-          src={product.image_url || `https://picsum.photos/seed/${product.sku}/400/400`}
+          src={(product.image_urls && product.image_urls.length > 0) ? product.image_urls[0] : `https://picsum.photos/seed/${product.sku}/400/400`}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"

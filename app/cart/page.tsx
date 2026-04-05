@@ -83,7 +83,7 @@ export default function CartPage() {
                 <div key={item.id} className="flex flex-col sm:flex-row bg-background-secondary rounded-xl p-4 border border-background-tertiary gap-4">
                   <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-background-tertiary">
                     <Image
-                      src={item.image_url || `https://picsum.photos/seed/${item.sku}/200/200`}
+                      src={(item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : `https://picsum.photos/seed/${item.sku}/200/200`}
                       alt={item.name}
                       fill
                       className="object-cover"

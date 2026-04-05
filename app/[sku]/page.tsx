@@ -6,6 +6,7 @@ import { getProductBySku, getProducts } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import AddToCartButton from '@/components/AddToCartButton';
 import ProductCard from '@/components/ProductCard';
+import ProductGallery from '@/components/ProductGallery';
 
 export default async function ProductPage({ params }: { params: Promise<{ sku: string }> }) {
   const { sku } = await params;
@@ -37,22 +38,12 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
         </Link>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
-          {/* Image Gallery (Simplified for now) */}
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-background-secondary border border-background-tertiary">
-            <Image
-              src={product.image_url || `https://picsum.photos/seed/${product.sku}/800/800`}
-              alt={product.name}
-              fill
-              className="object-cover"
-              referrerPolicy="no-referrer"
-              priority
-            />
-            {product.is_out_of_stock && (
-              <div className="absolute top-4 right-4 z-10 bg-danger text-white font-bold px-3 py-1.5 rounded-md">
-                Esgotado
-              </div>
-            )}
-          </div>
+          <ProductGallery 
+            images={product.image_urls || []} 
+            sku={product.sku} 
+            name={product.name} 
+            isOutOfStock={product.is_out_of_stock} 
+          />
 
           {/* Product Info */}
           <div className="flex flex-col">

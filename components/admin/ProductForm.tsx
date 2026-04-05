@@ -2,18 +2,27 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wand2, Save, ArrowLeft } from 'lucide-react';
+import { Wand2, Save, ArrowLeft, Upload, Link as LinkIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ProductForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
   const [isGeneratingSku, setIsGeneratingSku] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [sku, setSku] = useState(initialData?.sku || '');
   const [name, setName] = useState(initialData?.name || '');
   const [category, setCategory] = useState(initialData?.category || '');
+  const [description, setDescription] = useState(initialData?.description || '');
   const [costPrice, setCostPrice] = useState(initialData?.cost_price || 0);
   const [pixPrice, setPixPrice] = useState(initialData?.pix_price || 0);
   const [cardPrice, setCardPrice] = useState(initialData?.card_price || 0);
+  const [stockQuantity, setStockQuantity] = useState(initialData?.stock_quantity || 0);
+  const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
+  
+  const [imageUrls, setImageUrls] = useState<string[]>(initialData?.image_urls || []);
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   const profit = pixPrice - costPrice;
   const margin = costPrice > 0 ? (profit / costPrice) * 100 : 0;
@@ -44,11 +53,102 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
     }
   };
 
+  const handleAddImageUrl = () => {
+    if (imageUrls.length >= 3) {
+      alert('Máximo de 3 imagens permitido.');
+      return;
+    }
+    if (!newImageUrl) return;
+    
+    setImageUrls([...imageUrls, newImageUrl]);
+    setNewImageUrl('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageUrls(imageUrls.filter((_, i) => i !== index));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (imageUrls.length >= 3) {
+      alert('Máximo de 3 imagens permitido.');
+      return;
+    }
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const supabase = createClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      setImageUrls([...imageUrls, publicUrl]);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Erro ao fazer upload da imagem. Verifique se o bucket "product-images" existe e é público.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we would save to Supabase here
-    alert('Produto salvo com sucesso! (Simulação)');
-    router.push('/admin/products');
+    setIsSaving(true);
+    
+    try {
+      const supabase = createClient();
+      
+      const productData = {
+        sku,
+        name,
+        category,
+        description,
+        cost_price: costPrice,
+        pix_price: pixPrice,
+        card_price: cardPrice,
+        stock_quantity: stockQuantity,
+        image_urls: imageUrls,
+        external_link: externalLink,
+        is_out_of_stock: stockQuantity <= 0,
+      };
+
+      let error;
+      
+      if (initialData?.id) {
+        const { error: updateError } = await supabase
+          .from('products')
+          .update(productData)
+          .eq('id', initialData.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('products')
+          .insert([productData]);
+        error = insertError;
+      }
+
+      if (error) throw error;
+      
+      alert('Produto salvo com sucesso!');
+      router.push('/admin/products');
+      router.refresh();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Erro ao salvar produto. Verifique o console para mais detalhes.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -120,8 +220,9 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           <label className="block text-sm font-medium text-text-support mb-2">Descrição</label>
           <textarea 
             rows={4}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-            defaultValue={initialData?.description}
           ></textarea>
         </div>
 
@@ -142,7 +243,8 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           <input 
             type="number" 
             required
-            defaultValue={initialData?.stock_quantity || 0}
+            value={stockQuantity}
+            onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
           />
         </div>
@@ -186,18 +288,68 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           <label className="block text-sm font-medium text-text-support mb-2">Link Externo (YouTube, etc) - Opcional</label>
           <input 
             type="url" 
-            defaultValue={initialData?.external_link}
+            value={externalLink}
+            onChange={(e) => setExternalLink(e.target.value)}
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
           />
         </div>
         
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-text-support mb-2">URL da Imagem (Simulação de Upload)</label>
-          <input 
-            type="url" 
-            defaultValue={initialData?.image_url}
-            className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-          />
+          <label className="block text-sm font-medium text-text-support mb-4">Imagens do Produto (Máx. 3)</label>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="relative aspect-square rounded-lg border-2 border-dashed border-background-tertiary flex flex-col items-center justify-center bg-background-main overflow-hidden">
+                {imageUrls[index] ? (
+                  <>
+                    <img src={imageUrls[index]} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-2 right-2 p-1.5 bg-danger/80 hover:bg-danger text-white rounded-md transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <span className="text-text-support text-sm block mb-2">Slot {index + 1}</span>
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-background-tertiary hover:bg-primary/20 text-primary rounded-md text-sm transition-colors">
+                      <Upload className="w-4 h-4" />
+                      Upload
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleFileUpload}
+                        disabled={imageUrls.length >= 3}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {imageUrls.length < 3 && (
+            <div className="flex gap-2">
+              <input 
+                type="url" 
+                placeholder="Ou cole a URL da imagem aqui..."
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                className="flex-grow px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+              />
+              <button 
+                type="button"
+                onClick={handleAddImageUrl}
+                className="flex items-center gap-2 px-4 py-2 bg-background-tertiary hover:bg-primary/20 text-primary rounded-lg transition-colors"
+              >
+                <LinkIcon className="w-4 h-4" />
+                Adicionar URL
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -205,9 +357,19 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         <Link href="/admin/products" className="px-6 py-2 rounded-lg text-text-main hover:bg-background-tertiary transition-colors">
           Cancelar
         </Link>
-        <button type="submit" className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-background-main font-medium py-2 px-6 rounded-lg transition-colors">
-          <Save className="w-5 h-5" />
-          Salvar Produto
+        <button 
+          type="submit" 
+          disabled={isSaving}
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-background-main font-medium py-2 px-6 rounded-lg transition-colors"
+        >
+          {isSaving ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-background-main"></div>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              Salvar Produto
+            </>
+          )}
         </button>
       </div>
     </form>

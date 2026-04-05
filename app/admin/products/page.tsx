@@ -48,7 +48,7 @@ export default async function AdminProducts() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded overflow-hidden bg-background-tertiary">
-                          <Image src={product.image_url || `https://picsum.photos/seed/${product.sku}/100/100`} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
+                          <Image src={(product.image_urls && product.image_urls.length > 0) ? product.image_urls[0] : `https://picsum.photos/seed/${product.sku}/100/100`} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
                         </div>
                         <div>
                           <p className="font-medium text-text-main line-clamp-1">{product.name}</p>

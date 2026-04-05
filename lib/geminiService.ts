@@ -9,7 +9,7 @@ export async function generateSKU(name: string, category: string): Promise<strin
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3-flash-preview',
     contents: `Produto: ${name}\nCategoria: ${category}`,
     config: {
       systemInstruction: 'Você é um gerador de SKUs para um e-commerce. Receba o nome e categoria de um produto e retorne APENAS um código SKU curto (ex: 5 a 7 caracteres alfanuméricos), fácil de ler, sem formatação markdown.',
