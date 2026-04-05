@@ -283,7 +283,15 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
             step="0.01"
             required
             value={pixPrice}
-            onChange={(e) => setPixPrice(parseFloat(e.target.value) || 0)}
+            onChange={(e) => {
+              const newPixPrice = parseFloat(e.target.value) || 0;
+              setPixPrice(newPixPrice);
+              if (newPixPrice > 0) {
+                setCardPrice(Math.ceil(newPixPrice * 1.14));
+              } else {
+                setCardPrice(0);
+              }
+            }}
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-success focus:outline-none focus:border-primary font-bold"
           />
         </div>
