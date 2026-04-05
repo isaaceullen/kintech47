@@ -87,6 +87,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         .upload(filePath, file);
 
       if (uploadError) {
+        console.error('Erro detalhado do Supabase Storage:', uploadError);
         throw uploadError;
       }
 
@@ -97,9 +98,9 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       const newImageUrls = [...imageUrls];
       newImageUrls[index] = publicUrl;
       setImageUrls(newImageUrls);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      alert('Erro ao fazer upload da imagem. Verifique se o bucket "product-images" existe e é público.');
+      alert(`Erro ao fazer upload da imagem: ${error.message || 'Verifique se o bucket "product-images" existe e é público.'}`);
     }
   };
 
@@ -143,7 +144,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       }
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Detalhes do erro do Supabase ao salvar produto:', error);
         setSubmitError(`Erro do banco: ${error.message || JSON.stringify(error)}`);
         return;
       }
@@ -152,7 +153,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       router.push('/admin/products');
       router.refresh();
     } catch (error: any) {
-      console.error('Error saving product:', error);
+      console.error('Erro inesperado ao salvar produto:', error);
       setSubmitError(`Erro inesperado: ${error.message || 'Falha ao salvar'}`);
     } finally {
       setIsSaving(false);
@@ -307,42 +308,46 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
             {[0, 1, 2].map((index) => (
-              <div key={index} className="flex flex-col gap-3">
-                <div className="relative aspect-square rounded-lg border-2 border-dashed border-background-tertiary flex flex-col items-center justify-center bg-background-main overflow-hidden">
-                  {imageUrls[index] ? (
-                    <>
-                      <img src={imageUrls[index]} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute top-2 right-2 p-1.5 bg-danger/80 hover:bg-danger text-white rounded-md transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center p-4">
-                      <span className="text-text-support text-sm block mb-2">Slot {index + 1}</span>
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-background-tertiary hover:bg-primary/20 text-primary rounded-md text-sm transition-colors">
-                        <Upload className="w-4 h-4" />
-                        Upload
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => handleFileUpload(e, index)}
-                        />
-                      </label>
-                    </div>
+              <div key={index} className="flex flex-col gap-3 p-4 border border-background-tertiary rounded-xl bg-background-main">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-text-main">Slot {index + 1}</span>
+                  {imageUrls[index] && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="text-xs text-danger hover:underline flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> Remover
+                    </button>
                   )}
                 </div>
-                <input 
-                  type="url" 
-                  placeholder="Ou cole a URL aqui..."
-                  value={imageUrls[index]}
-                  onChange={(e) => handleUrlChange(e.target.value, index)}
-                  className="w-full px-3 py-2 text-sm bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-                />
+                
+                <div className="relative aspect-square rounded-lg border border-background-tertiary flex flex-col items-center justify-center bg-background-secondary overflow-hidden">
+                  {imageUrls[index] ? (
+                    <img src={imageUrls[index]} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-text-support text-xs">Sem imagem</span>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 mt-1">
+                  <input 
+                    type="url" 
+                    placeholder="Cole a URL..."
+                    value={imageUrls[index]}
+                    onChange={(e) => handleUrlChange(e.target.value, index)}
+                    className="flex-grow px-3 py-2 text-sm bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+                  />
+                  <label className="cursor-pointer flex items-center justify-center px-3 py-2 bg-background-tertiary hover:bg-primary/20 text-primary rounded-lg transition-colors" title="Fazer Upload">
+                    <Upload className="w-4 h-4" />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => handleFileUpload(e, index)}
+                    />
+                  </label>
+                </div>
               </div>
             ))}
           </div>
