@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DollarSign, TrendingUp, Package } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
 export default function DashboardClient({ initialMetrics }: { initialMetrics: { totalSales: number, totalProfit: number, productsInStock: number } }) {
   const router = useRouter();
@@ -44,11 +45,11 @@ export default function DashboardClient({ initialMetrics }: { initialMetrics: { 
         totalProfit: profitInput
       }));
       
-      alert('Métricas atualizadas com sucesso!');
+      toast.success('Métricas atualizadas com sucesso!');
       router.refresh();
     } catch (error) {
       console.error('Error updating metrics:', error);
-      alert('Erro ao atualizar métricas. Verifique se a tabela dashboard_settings existe.');
+      toast.error('Erro ao atualizar métricas. Verifique se a tabela dashboard_settings existe.');
     } finally {
       setIsSaving(false);
     }

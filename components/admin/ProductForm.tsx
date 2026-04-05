@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Wand2, Save, ArrowLeft, Upload, Link as LinkIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
-export default function ProductForm({ initialData }: { initialData?: any }) {
+export default function ProductForm({ initialData, categories = [] }: { initialData?: any, categories?: any[] }) {
   const router = useRouter();
   const [isGeneratingSku, setIsGeneratingSku] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -148,10 +149,11 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       if (error) {
         console.error('Detalhes do erro do Supabase ao salvar produto:', error);
         setSubmitError(`Erro do banco: ${error.message || JSON.stringify(error)}`);
+        toast.error('Erro ao salvar produto!');
         return;
       }
       
-      alert('Produto salvo com sucesso!');
+      toast.success('Produto salvo com sucesso!');
       router.push('/admin/products');
       router.refresh();
     } catch (error: any) {
@@ -192,13 +194,17 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
 
         <div>
           <label className="block text-sm font-medium text-text-support mb-2">Categoria</label>
-          <input 
-            type="text" 
+          <select 
             required
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-          />
+            className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary appearance-none"
+          >
+            <option value="" disabled>Selecione uma categoria</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
         </div>
 
         <div>

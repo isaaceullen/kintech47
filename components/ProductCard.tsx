@@ -57,7 +57,7 @@ export default function ProductCard({ product }: { product: Product }) {
               {formatCurrency(product.pix_price)} <span className="text-xs font-normal text-text-support">no PIX</span>
             </span>
             <span className="text-sm text-text-support mt-1">
-              {formatCurrency(product.card_price)} no cartão
+              Em até 4x de {formatCurrency(product.card_price / 4)} sem juros no cartão (Total: {formatCurrency(product.card_price)})
             </span>
           </div>
           

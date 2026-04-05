@@ -88,8 +88,8 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
                   <span className="text-text-support">no PIX</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl text-text-main">{formatCurrency(product.card_price)}</span>
-                  <span className="text-text-support">no cartão em até 12x</span>
+                  <span className="text-xl text-text-main">Em até 4x de {formatCurrency(product.card_price / 4)}</span>
+                  <span className="text-text-support">sem juros no cartão (Total: {formatCurrency(product.card_price)})</span>
                 </div>
               </div>
             </div>

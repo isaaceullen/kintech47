@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { LayoutDashboard, Package, LogOut, Home } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, Home, Tags } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background-main">
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-background-secondary border-r border-background-tertiary flex-shrink-0">
+      <aside className="w-full md:w-64 bg-background-secondary border-r border-background-tertiary flex-shrink-0 flex flex-col">
         <div className="p-6">
           <Image
             src="https://i.imgur.com/o2m4oj2.png"
@@ -24,6 +24,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/products" className="flex items-center gap-3 px-4 py-3 text-text-main hover:bg-background-tertiary rounded-lg transition-colors">
               <Package className="w-5 h-5 text-primary" />
               Produtos
+            </Link>
+            <Link href="/admin/categories" className="flex items-center gap-3 px-4 py-3 text-text-main hover:bg-background-tertiary rounded-lg transition-colors">
+              <Tags className="w-5 h-5 text-primary" />
+              Categorias
             </Link>
           </nav>
         </div>

@@ -14,6 +14,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     .eq('id', id)
     .single();
 
+  const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
+  const categories = categoriesData || [];
+
   if (error || !product) {
     notFound();
   }
@@ -21,7 +24,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <div>
       <h1 className="text-3xl font-bold text-text-main mb-8">Editar Produto</h1>
-      <ProductForm initialData={product} />
+      <ProductForm initialData={product} categories={categories} />
     </div>
   );
 }

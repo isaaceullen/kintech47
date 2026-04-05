@@ -32,9 +32,6 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-            <Link href="/admin" className="text-text-support hover:text-text-main transition-colors">
-              <LogIn className="h-5 w-5" />
-            </Link>
           </div>
         </div>
       </div>

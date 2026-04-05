@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Edit, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
+import DeleteProductButton from '@/components/admin/DeleteProductButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,9 +108,7 @@ export default async function AdminProducts() {
                         <Link href={`/admin/products/${product.id}/edit`} className="p-2 text-text-support hover:text-primary transition-colors">
                           <Edit className="w-4 h-4" />
                         </Link>
-                        <button className="p-2 text-text-support hover:text-danger transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <DeleteProductButton productId={product.id} imageUrls={product.image_urls || []} />
                       </div>
                     </td>
                   </tr>

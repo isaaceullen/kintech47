@@ -157,9 +157,14 @@ export default function CartPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-text-support">Total no Cartão</span>
-                    <span className="text-text-main font-medium">{formatCurrency(getTotalCard())}</span>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-text-support">Total no Cartão</span>
+                      <span className="text-text-main font-medium">Em até 4x de {formatCurrency(getTotalCard() / 4)}</span>
+                    </div>
+                    <div className="text-right text-xs text-text-support">
+                      sem juros no cartão (Total: {formatCurrency(getTotalCard())})
+                    </div>
                   </div>
                   <div className="flex justify-between items-center pt-4 border-t border-background-tertiary">
                     <span className="text-lg font-medium text-text-main">Total no PIX</span>
