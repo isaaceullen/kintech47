@@ -3,13 +3,13 @@ import { Toaster } from 'react-hot-toast';
 import './globals.css'; // Global styles
 
 export const metadata: Metadata = {
-  title: 'My Google AI Studio App',
-  description: 'My Google AI Studio App',
+  title: 'Kintech47',
+  description: 'Importados Joinville',
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en">
+    <html lang="pt-br">
       <body suppressHydrationWarning>
         {children}
         <Toaster position="bottom-right" />

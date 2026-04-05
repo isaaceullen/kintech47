@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-background-secondary border-b border-background-tertiary">
         <Image
-          src="https://i.imgur.com/o2m4oj2.png"
+          src="https://i.imgur.com/7Zn0fr7.png"
           alt="Logo"
           width={120}
           height={40}
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-6">
           <div className="hidden md:block mb-8">
             <Image
-              src="https://i.imgur.com/o2m4oj2.png"
+              src="https://i.imgur.com/7Zn0fr7.png"
               alt="Logo"
               width={150}
               height={50}

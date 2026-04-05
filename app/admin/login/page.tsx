@@ -54,7 +54,7 @@ export default function AdminLogin() {
       <div className="bg-background-secondary p-8 rounded-2xl border border-background-tertiary w-full max-w-md">
         <div className="flex justify-center mb-8">
           <Image
-            src="https://i.imgur.com/o2m4oj2.png"
+            src="https://i.imgur.com/7Zn0fr7.png"
             alt="Logo"
             width={180}
             height={60}
