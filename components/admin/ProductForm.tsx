@@ -21,8 +21,15 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const [stockQuantity, setStockQuantity] = useState(initialData?.stock_quantity || 0);
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
-  const [imageUrls, setImageUrls] = useState<string[]>(initialData?.image_urls || []);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>(() => {
+    const initial = initialData?.image_urls || [];
+    return [
+      initial[0] || '',
+      initial[1] || '',
+      initial[2] || ''
+    ];
+  });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const profit = pixPrice - costPrice;
   const margin = costPrice > 0 ? (profit / costPrice) * 100 : 0;
@@ -53,27 +60,19 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
     }
   };
 
-  const handleAddImageUrl = () => {
-    if (imageUrls.length >= 3) {
-      alert('Máximo de 3 imagens permitido.');
-      return;
-    }
-    if (!newImageUrl) return;
-    
-    setImageUrls([...imageUrls, newImageUrl]);
-    setNewImageUrl('');
-  };
-
   const handleRemoveImage = (index: number) => {
-    setImageUrls(imageUrls.filter((_, i) => i !== index));
+    const newImageUrls = [...imageUrls];
+    newImageUrls[index] = '';
+    setImageUrls(newImageUrls);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (imageUrls.length >= 3) {
-      alert('Máximo de 3 imagens permitido.');
-      return;
-    }
+  const handleUrlChange = (value: string, index: number) => {
+    const newImageUrls = [...imageUrls];
+    newImageUrls[index] = value;
+    setImageUrls(newImageUrls);
+  };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -83,7 +82,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('product-images')
         .upload(filePath, file);
 
@@ -95,7 +94,9 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         .from('product-images')
         .getPublicUrl(filePath);
 
-      setImageUrls([...imageUrls, publicUrl]);
+      const newImageUrls = [...imageUrls];
+      newImageUrls[index] = publicUrl;
+      setImageUrls(newImageUrls);
     } catch (error) {
       console.error('Error uploading image:', error);
       alert('Erro ao fazer upload da imagem. Verifique se o bucket "product-images" existe e é público.');
@@ -105,10 +106,13 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSubmitError(null);
     
     try {
       const supabase = createClient();
       
+      const finalImageUrls = imageUrls.filter(url => url.trim() !== '');
+
       const productData = {
         sku,
         name,
@@ -118,7 +122,7 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         pix_price: pixPrice,
         card_price: cardPrice,
         stock_quantity: stockQuantity,
-        image_urls: imageUrls,
+        image_urls: finalImageUrls,
         external_link: externalLink,
         is_out_of_stock: stockQuantity <= 0,
       };
@@ -138,14 +142,18 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        setSubmitError(`Erro do banco: ${error.message || JSON.stringify(error)}`);
+        return;
+      }
       
       alert('Produto salvo com sucesso!');
       router.push('/admin/products');
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
-      alert('Erro ao salvar produto. Verifique o console para mais detalhes.');
+      setSubmitError(`Erro inesperado: ${error.message || 'Falha ao salvar'}`);
     } finally {
       setIsSaving(false);
     }
@@ -297,61 +305,56 @@ export default function ProductForm({ initialData }: { initialData?: any }) {
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-text-support mb-4">Imagens do Produto (Máx. 3)</label>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
             {[0, 1, 2].map((index) => (
-              <div key={index} className="relative aspect-square rounded-lg border-2 border-dashed border-background-tertiary flex flex-col items-center justify-center bg-background-main overflow-hidden">
-                {imageUrls[index] ? (
-                  <>
-                    <img src={imageUrls[index]} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className="absolute top-2 right-2 p-1.5 bg-danger/80 hover:bg-danger text-white rounded-md transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-center p-4">
-                    <span className="text-text-support text-sm block mb-2">Slot {index + 1}</span>
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-background-tertiary hover:bg-primary/20 text-primary rounded-md text-sm transition-colors">
-                      <Upload className="w-4 h-4" />
-                      Upload
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        onChange={handleFileUpload}
-                        disabled={imageUrls.length >= 3}
-                      />
-                    </label>
-                  </div>
-                )}
+              <div key={index} className="flex flex-col gap-3">
+                <div className="relative aspect-square rounded-lg border-2 border-dashed border-background-tertiary flex flex-col items-center justify-center bg-background-main overflow-hidden">
+                  {imageUrls[index] ? (
+                    <>
+                      <img src={imageUrls[index]} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-2 right-2 p-1.5 bg-danger/80 hover:bg-danger text-white rounded-md transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center p-4">
+                      <span className="text-text-support text-sm block mb-2">Slot {index + 1}</span>
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 bg-background-tertiary hover:bg-primary/20 text-primary rounded-md text-sm transition-colors">
+                        <Upload className="w-4 h-4" />
+                        Upload
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleFileUpload(e, index)}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+                <input 
+                  type="url" 
+                  placeholder="Ou cole a URL aqui..."
+                  value={imageUrls[index]}
+                  onChange={(e) => handleUrlChange(e.target.value, index)}
+                  className="w-full px-3 py-2 text-sm bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+                />
               </div>
             ))}
           </div>
-
-          {imageUrls.length < 3 && (
-            <div className="flex gap-2">
-              <input 
-                type="url" 
-                placeholder="Ou cole a URL da imagem aqui..."
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                className="flex-grow px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
-              />
-              <button 
-                type="button"
-                onClick={handleAddImageUrl}
-                className="flex items-center gap-2 px-4 py-2 bg-background-tertiary hover:bg-primary/20 text-primary rounded-lg transition-colors"
-              >
-                <LinkIcon className="w-4 h-4" />
-                Adicionar URL
-              </button>
-            </div>
-          )}
         </div>
       </div>
+
+      {submitError && (
+        <div className="mb-6 p-4 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
+          <p className="font-bold mb-1">Erro ao salvar:</p>
+          <p>{submitError}</p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-4 border-t border-background-tertiary pt-6">
         <Link href="/admin/products" className="px-6 py-2 rounded-lg text-text-main hover:bg-background-tertiary transition-colors">
