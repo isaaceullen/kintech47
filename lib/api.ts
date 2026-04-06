@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { Product, Popup } from '@/types/database';
+import { Product, Popup, Category } from '@/types/database';
 
 const MOCK_PRODUCTS: Product[] = [
   {
@@ -56,6 +56,11 @@ const MOCK_POPUPS: Popup[] = [
   }
 ];
 
+const MOCK_CATEGORIES: Category[] = [
+  { id: '1', created_at: new Date().toISOString(), name: 'Eletrônicos', slug: 'eletronicos' },
+  { id: '2', created_at: new Date().toISOString(), name: 'Acessórios', slug: 'acessorios' },
+];
+
 export async function getProducts(): Promise<Product[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -94,6 +99,26 @@ export async function getProductBySku(sku: string): Promise<Product | null> {
   } catch (error) {
     console.error('Error fetching product:', error);
     return MOCK_PRODUCTS.find(p => p.sku === sku) || null;
+  }
+}
+
+export async function getCategories(): Promise<Category[]> {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+      return MOCK_CATEGORIES;
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return MOCK_CATEGORIES;
   }
 }
 

@@ -27,3 +27,10 @@ export type Popup = {
   button_link: string | null;
   is_active: boolean;
 };
+
+export type Category = {
+  id: string;
+  created_at: string;
+  name: string;
+  slug: string;
+};
