@@ -14,14 +14,18 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex-shrink-0 flex items-center">
-            <Image
-              src="https://i.imgur.com/7Zn0fr7.png"
-              alt="Logo"
-              width={120}
-              height={40}
-              className="h-10 w-auto object-contain"
-              referrerPolicy="no-referrer"
-            />
+<Image
+  src="https://i.imgur.com/7Zn0fr7.png"
+  alt="Logo Kintech47"
+  width={360} 
+  height={120}
+  // ALTERAÇÃO AQUI: 
+  // h-7 (28px) no celular
+  // md:h-10 (40px) em telas maiores (computador)
+  className="h-4 md:h-7 w-auto object-contain"
+  priority
+  referrerPolicy="no-referrer"
+/>
           </Link>
           <div className="flex items-center space-x-6">
             <Link href="/cart" className="relative text-text-main hover:text-primary transition-colors">
