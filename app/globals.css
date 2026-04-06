@@ -6,9 +6,10 @@
   --color-background-secondary: #14213D;
   --color-background-tertiary: #1D2D50;
   
-  --color-text-main: #E0E1DD;
-  --color-text-support: #8D99AE;
-  --color-text-reading: #2B2D42;
+  /* CORES DE TEXTO AJUSTADAS PARA ALTO CONTRASTE */
+  --color-text-main: #FFFFFF;         /* Branco Puro (Títulos) */
+  --color-text-support: #D1D5DB;      /* Cinza Claro/Prata (Descrições e Labels) */
+  --color-text-reading: #F3F4F6;      /* Branco Gelo (Textos de leitura longa) */
   
   --color-primary: #C5A059;
   --color-primary-hover: #A38345;
