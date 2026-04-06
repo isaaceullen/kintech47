@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LayoutDashboard, Package, LogOut, Home, Tags, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, Home, Tags, Menu, X, MessageSquare } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,6 +65,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <Tags className="w-5 h-5 text-primary" />
               Categorias
+            </Link>
+            <Link 
+              href="/admin/popups" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-text-main hover:bg-background-tertiary rounded-lg transition-colors"
+            >
+              <MessageSquare className="w-5 h-5 text-primary" />
+              Pop-ups
             </Link>
           </nav>
         </div>

@@ -16,3 +16,14 @@ export type Product = {
 export type CartItem = Product & {
   cartQuantity: number;
 };
+
+export type Popup = {
+  id: string;
+  created_at: string;
+  title: string;
+  description: string;
+  image_url: string | null;
+  button_text: string | null;
+  button_link: string | null;
+  is_active: boolean;
+};

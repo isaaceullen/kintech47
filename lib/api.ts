@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { Product } from '@/types/database';
+import { Product, Popup } from '@/types/database';
 
 const MOCK_PRODUCTS: Product[] = [
   {
@@ -43,6 +43,19 @@ const MOCK_PRODUCTS: Product[] = [
   }
 ];
 
+const MOCK_POPUPS: Popup[] = [
+  {
+    id: '1',
+    created_at: new Date().toISOString(),
+    title: 'Oferta Especial!',
+    description: 'Aproveite nossos descontos exclusivos nesta semana.',
+    image_url: 'https://picsum.photos/seed/sale/600/400',
+    button_text: 'Ver Produtos',
+    button_link: '/',
+    is_active: true,
+  }
+];
+
 export async function getProducts(): Promise<Product[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -81,5 +94,28 @@ export async function getProductBySku(sku: string): Promise<Product | null> {
   } catch (error) {
     console.error('Error fetching product:', error);
     return MOCK_PRODUCTS.find(p => p.sku === sku) || null;
+  }
+}
+
+export async function getActivePopup(): Promise<Popup | null> {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+      return MOCK_POPUPS.find(p => p.is_active) || null;
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('popups')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is no rows returned
+    return data || null;
+  } catch (error) {
+    console.error('Error fetching active popup:', error);
+    return MOCK_POPUPS.find(p => p.is_active) || null;
   }
 }

@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbar';
 import ProductList from '@/components/ProductList';
+import PopupModal from '@/components/PopupModal';
 
 export default function Home() {
   return (
@@ -12,6 +13,7 @@ export default function Home() {
         </div>
         <ProductList />
       </main>
+      <PopupModal />
     </div>
   );
 }
