@@ -34,3 +34,14 @@ export type Category = {
   name: string;
   slug: string;
 };
+
+export type Sale = {
+  id: string;
+  created_at: string;
+  product_id: string;
+  product_name: string;
+  cost_price: number;
+  sale_price: number;
+  payment_method: 'PIX' | 'Cartão';
+  profit: number;
+};

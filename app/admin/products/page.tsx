@@ -3,6 +3,7 @@ import { Plus, Edit, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
+import MarkAsSoldButton from '@/components/admin/MarkAsSoldButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,6 +106,7 @@ export default async function AdminProducts() {
                     <td className="p-4 text-sm text-accent">{margin.toFixed(1)}%</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <MarkAsSoldButton product={product} />
                         <Link href={`/admin/products/${product.id}/edit`} className="p-2 text-text-support hover:text-primary transition-colors">
                           <Edit className="w-4 h-4" />
                         </Link>

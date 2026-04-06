@@ -4,23 +4,22 @@ import DashboardClient from '@/components/admin/DashboardClient';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  let totalSales = 0;
-  let totalProfit = 0;
+  let sales = [];
   let productsInStock = 0;
 
   try {
     const supabase = await createClient();
     
-    // Fetch dashboard settings
-    const { data: settings } = await supabase
-      .from('dashboard_settings')
+    // Fetch sales
+    const { data: salesData, error: salesError } = await supabase
+      .from('sales')
       .select('*')
-      .eq('id', 1)
-      .single();
+      .order('created_at', { ascending: false });
       
-    if (settings) {
-      totalSales = settings.total_sales || 0;
-      totalProfit = settings.total_profit || 0;
+    if (salesError) {
+      console.error('Error fetching sales:', salesError);
+    } else {
+      sales = salesData || [];
     }
 
     // Fetch product count
@@ -31,19 +30,7 @@ export default async function AdminDashboard() {
     productsInStock = count || 0;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
-    // Fallback to mock data
-    const { getProducts } = await import('@/lib/api');
-    const products = await getProducts();
-    productsInStock = products.length;
-    totalSales = 15000;
-    totalProfit = 4500;
   }
 
-  const metrics = {
-    totalSales,
-    totalProfit,
-    productsInStock,
-  };
-
-  return <DashboardClient initialMetrics={metrics} />;
+  return <DashboardClient initialSales={sales} productsInStock={productsInStock} />;
 }
