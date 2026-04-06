@@ -6,7 +6,11 @@ import { getProducts, getCategories } from '@/lib/api';
 import ProductCard from './ProductCard';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
-export default function ProductList() {
+interface ProductListProps {
+  initialSort?: string;
+}
+
+export default function ProductList({ initialSort = 'newest' }: ProductListProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +20,7 @@ export default function ProductList() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('a-z');
+  const [sortBy, setSortBy] = useState<string>(initialSort);
   
   // Local states for inputs (to prevent focus loss)
   const [localMinPrice, setLocalMinPrice] = useState<string>('');
@@ -61,7 +65,7 @@ export default function ProductList() {
     setLocalMaxPrice('');
     setMinPrice('');
     setMaxPrice('');
-    setSortBy('a-z');
+    setSortBy(initialSort);
   };
 
   // Apply filters
@@ -79,10 +83,11 @@ export default function ProductList() {
 
   // Apply sorting
   filteredProducts = filteredProducts.sort((a, b) => {
-    if (sortBy === 'a-z') return a.name.localeCompare(b.name);
-    if (sortBy === 'z-a') return b.name.localeCompare(a.name);
-    if (sortBy === 'price-asc') return a.pix_price - b.pix_price;
-    if (sortBy === 'price-desc') return b.pix_price - a.pix_price;
+    if (sortBy === 'az') return a.name.localeCompare(b.name);
+    if (sortBy === 'za') return b.name.localeCompare(a.name);
+    if (sortBy === 'lowest_price') return a.pix_price - b.pix_price;
+    if (sortBy === 'highest_price') return b.pix_price - a.pix_price;
+    if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     return 0;
   });
 
@@ -223,10 +228,11 @@ export default function ProductList() {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="appearance-none w-full sm:w-48 pl-4 pr-10 py-3 bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors cursor-pointer"
               >
-                <option value="a-z">Ordenar de A-Z</option>
-                <option value="z-a">Ordenar de Z-A</option>
-                <option value="price-asc">Menor Preço</option>
-                <option value="price-desc">Maior Preço</option>
+                <option value="newest">Mais Recentes</option>
+                <option value="az">Ordenar de A-Z</option>
+                <option value="za">Ordenar de Z-A</option>
+                <option value="lowest_price">Menor Preço</option>
+                <option value="highest_price">Maior Preço</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-support">
                 <ChevronDown className="w-5 h-5" />
