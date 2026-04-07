@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { X } from 'lucide-react';
 import { Popup } from '@/types/database';
 import { getActivePopup } from '@/lib/api';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function PopupModal() {
   const [popup, setPopup] = useState<Popup | null>(null);
@@ -27,8 +28,21 @@ export default function PopupModal() {
   }, []);
 
   const closePopup = () => {
+    if (popup) {
+      trackEvent('close_popup', { popup_title: popup.title });
+    }
     setIsOpen(false);
     sessionStorage.setItem('hasSeenPopup', 'true');
+  };
+
+  const handleButtonClick = () => {
+    if (popup) {
+      trackEvent('click_popup_button', { 
+        popup_title: popup.title,
+        button_link: popup.button_link 
+      });
+    }
+    closePopup();
   };
 
   if (!isOpen || !popup) return null;
@@ -68,7 +82,7 @@ export default function PopupModal() {
           {popup.button_text && popup.button_link && (
             <Link 
               href={popup.button_link}
-              onClick={closePopup}
+              onClick={handleButtonClick}
               className="inline-block w-full sm:w-auto px-8 py-3 bg-accent hover:bg-accent-hover text-background-main font-bold rounded-lg transition-colors"
             >
               {popup.button_text}

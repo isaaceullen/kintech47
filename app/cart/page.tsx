@@ -7,6 +7,7 @@ import { Trash2, Plus, Minus, ArrowLeft, Send } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import Navbar from '@/components/Navbar';
 import html2canvas from 'html2canvas';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPix, getTotalCard } = useCartStore();
@@ -32,6 +33,11 @@ export default function CartPage() {
     
     setIsProcessing(true);
     try {
+      trackEvent('generate_order_whatsapp', {
+        total_pix: getTotalPix(),
+        total_card: getTotalCard()
+      });
+
       // Generate image of the summary
       const canvas = await html2canvas(summaryRef.current, {
         backgroundColor: '#0B132B', // match dark theme

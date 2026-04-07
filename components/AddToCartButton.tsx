@@ -3,13 +3,19 @@
 import { ShoppingCart } from 'lucide-react';
 import { Product } from '@/types/database';
 import { useCartStore } from '@/store/cartStore';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function AddToCartButton({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
 
+  const handleAddToCart = () => {
+    trackEvent('add_to_cart', { product_name: product.name });
+    addItem(product);
+  };
+
   return (
     <button
-      onClick={() => addItem(product)}
+      onClick={handleAddToCart}
       disabled={product.is_out_of_stock}
       className={`w-full flex items-center justify-center gap-3 py-4 px-8 rounded-xl font-bold text-lg transition-all ${
         product.is_out_of_stock 

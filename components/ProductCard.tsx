@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import { Product } from '@/types/database';
 import { useCartStore } from '@/store/cartStore';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
@@ -19,6 +20,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    trackEvent('add_to_cart', { product_name: product.name });
     addItem(product);
   };
 
