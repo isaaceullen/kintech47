@@ -3,11 +3,38 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-export default function ProductGallery({ images, sku, name, isOutOfStock }: { images: string[], sku: string, name: string, isOutOfStock: boolean }) {
+export default function ProductGallery({ 
+  images, 
+  sku, 
+  name, 
+  isOutOfStock,
+  isPromoActive,
+  discountType,
+  discountAmount,
+  pixPrice
+}: { 
+  images: string[], 
+  sku: string, 
+  name: string, 
+  isOutOfStock: boolean,
+  isPromoActive?: boolean,
+  discountType?: 'percentage' | 'fixed',
+  discountAmount?: number,
+  pixPrice?: number
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
   const validImages = Array.isArray(images) ? images.filter(img => typeof img === 'string' && img.startsWith('http')) : [];
   const displayImages = validImages.length > 0 ? validImages : ['https://via.placeholder.com/800'];
+
+  let discountPercentage = 0;
+  if (isPromoActive) {
+    if (discountType === 'percentage') {
+      discountPercentage = discountAmount || 0;
+    } else if (pixPrice && pixPrice > 0) {
+      discountPercentage = Math.round(((discountAmount || 0) / pixPrice) * 100);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -21,8 +48,13 @@ export default function ProductGallery({ images, sku, name, isOutOfStock }: { im
           priority
         />
         {isOutOfStock && (
-          <div className="absolute top-4 right-4 z-10 bg-danger text-white font-bold px-3 py-1.5 rounded-md">
+          <div className="absolute top-4 right-4 z-20 bg-danger text-white font-bold px-3 py-1.5 rounded-md">
             Esgotado
+          </div>
+        )}
+        {isPromoActive && !isOutOfStock && (
+          <div className="absolute top-4 right-4 z-20 bg-primary text-background-main font-bold px-3 py-1.5 rounded-md shadow-lg">
+            {discountPercentage}% OFF
           </div>
         )}
       </div>

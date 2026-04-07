@@ -11,6 +11,9 @@ export type Product = {
   image_urls: string[];
   external_link?: string;
   is_out_of_stock: boolean;
+  is_promo_active?: boolean;
+  discount_type?: 'percentage' | 'fixed';
+  discount_amount?: number;
 };
 
 export type CartItem = Product & {

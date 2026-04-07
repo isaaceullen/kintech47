@@ -22,6 +22,10 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
   const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialData?.is_out_of_stock));
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   
+  const [isPromoActive, setIsPromoActive] = useState(Boolean(initialData?.is_promo_active));
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>(initialData?.discount_type || 'percentage');
+  const [discountAmount, setDiscountAmount] = useState(Number(initialData?.discount_amount || 0));
+
   const [imageUrls, setImageUrls] = useState<string[]>(() => {
     let safeImages = ['', '', ''];
     if (initialData?.image_urls && Array.isArray(initialData.image_urls)) {
@@ -37,6 +41,21 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
 
   const profit = pixPrice - costPrice;
   const margin = costPrice > 0 ? (profit / costPrice) * 100 : 0;
+
+  let promoPixPrice = pixPrice;
+  if (isPromoActive) {
+    if (discountType === 'percentage') {
+      promoPixPrice = pixPrice - (pixPrice * (discountAmount / 100));
+    } else {
+      promoPixPrice = pixPrice - discountAmount;
+    }
+    // Ensure it doesn't go below 0
+    promoPixPrice = Math.max(0, promoPixPrice);
+  }
+  
+  const promoCardPrice = isPromoActive ? Math.ceil(promoPixPrice * 1.14) : cardPrice;
+  const promoProfit = promoPixPrice - costPrice;
+  const promoMargin = costPrice > 0 ? (promoProfit / costPrice) * 100 : 0;
 
   const handleGenerateSku = async () => {
     if (!name || !category) {
@@ -129,6 +148,9 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
         image_urls: finalImageUrls,
         external_link: externalLink,
         is_out_of_stock: isOutOfStock,
+        is_promo_active: isPromoActive,
+        discount_type: discountType,
+        discount_amount: discountAmount,
       };
 
       let error;
@@ -306,6 +328,80 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
             onChange={(e) => setCardPrice(parseFloat(e.target.value) || 0)}
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
           />
+        </div>
+
+        <div className="md:col-span-2 border-t border-background-tertiary pt-6 mt-2">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-text-main">Promoção</h3>
+              <p className="text-sm text-text-support">Ative para aplicar um desconto neste produto.</p>
+            </div>
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only"
+                  checked={isPromoActive}
+                  onChange={(e) => setIsPromoActive(e.target.checked)}
+                />
+                <div className={`block w-14 h-8 rounded-full transition-colors ${isPromoActive ? 'bg-primary' : 'bg-background-tertiary'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isPromoActive ? 'transform translate-x-6' : ''}`}></div>
+              </div>
+            </label>
+          </div>
+
+          {isPromoActive && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-background-main p-4 rounded-lg border border-primary/30">
+              <div>
+                <label className="block text-sm font-medium text-text-support mb-2">Tipo de Desconto</label>
+                <select
+                  value={discountType}
+                  onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'fixed')}
+                  className="w-full px-4 py-2 bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary appearance-none"
+                >
+                  <option value="percentage">% Porcentagem</option>
+                  <option value="fixed">R$ Valor Fixo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-support mb-2">
+                  Valor do Desconto {discountType === 'percentage' ? '(%)' : '(R$)'}
+                </label>
+                <input 
+                  type="number" 
+                  step={discountType === 'percentage' ? "1" : "0.01"}
+                  min="0"
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                  className="w-full px-4 py-2 bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+                />
+              </div>
+              
+              <div className="md:col-span-2 bg-background-secondary p-4 rounded-lg border border-background-tertiary">
+                <h4 className="text-sm font-bold text-text-main mb-3">Preview do Preço Final</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-text-support mb-1">PIX (Original)</p>
+                    <p className="text-sm text-text-support line-through">{formatCurrency(pixPrice)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-support mb-1">PIX (Promoção)</p>
+                    <p className="text-lg font-bold text-primary">{formatCurrency(promoPixPrice)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-support mb-1">Cartão (Promoção)</p>
+                    <p className="text-sm font-medium text-text-main">{formatCurrency(promoCardPrice)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-support mb-1">Lucro Real (Promo)</p>
+                    <p className={`text-sm font-bold ${promoProfit >= 0 ? 'text-success' : 'text-danger'}`}>
+                      {formatCurrency(promoProfit)} ({promoMargin.toFixed(1)}%)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 bg-background-main p-4 rounded-lg border border-background-tertiary flex flex-col sm:flex-row gap-6 justify-between items-center">

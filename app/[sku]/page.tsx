@@ -72,7 +72,11 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
             images={product.image_urls || []} 
             sku={product.sku} 
             name={product.name} 
-            isOutOfStock={product.is_out_of_stock} 
+            isOutOfStock={product.is_out_of_stock}
+            isPromoActive={product.is_promo_active}
+            discountType={product.discount_type}
+            discountAmount={product.discount_amount}
+            pixPrice={product.pix_price}
           />
 
           {/* Product Info */}
@@ -83,14 +87,46 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
             
             <div className="bg-background-secondary p-6 rounded-xl border border-background-tertiary mb-8">
               <div className="flex flex-col gap-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-success">{formatCurrency(product.pix_price)}</span>
-                  <span className="text-text-support">no PIX</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xl text-text-main">Em até 4x de {formatCurrency(product.card_price / 4)}</span>
-                  <span className="text-text-support">sem juros no cartão (Total: {formatCurrency(product.card_price)})</span>
-                </div>
+                {product.is_promo_active ? (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-lg text-text-support line-through">{formatCurrency(product.pix_price)}</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-primary">
+                        {formatCurrency(
+                          Math.max(0, product.discount_type === 'percentage' 
+                            ? product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100))
+                            : product.pix_price - (product.discount_amount || 0))
+                        )}
+                      </span>
+                      <span className="text-text-support">no PIX</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 mt-2">
+                      <span className="text-xl text-text-main">
+                        Em até 4x de {formatCurrency(Math.ceil(Math.max(0, product.discount_type === 'percentage' 
+                            ? product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100))
+                            : product.pix_price - (product.discount_amount || 0)) * 1.14) / 4)}
+                      </span>
+                      <span className="text-text-support">
+                        sem juros no cartão (Total: {formatCurrency(Math.ceil(Math.max(0, product.discount_type === 'percentage' 
+                            ? product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100))
+                            : product.pix_price - (product.discount_amount || 0)) * 1.14))})
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-success">{formatCurrency(product.pix_price)}</span>
+                      <span className="text-text-support">no PIX</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl text-text-main">Em até 4x de {formatCurrency(product.card_price / 4)}</span>
+                      <span className="text-text-support">sem juros no cartão (Total: {formatCurrency(product.card_price)})</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
