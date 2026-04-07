@@ -83,6 +83,11 @@ export default function ProductList({ initialSort = 'newest' }: ProductListProps
 
   // Apply sorting
   filteredProducts = filteredProducts.sort((a, b) => {
+    if (sortBy === 'promo_first') {
+      if (a.is_promo_active && !b.is_promo_active) return -1;
+      if (!a.is_promo_active && b.is_promo_active) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
     if (sortBy === 'az') return a.name.localeCompare(b.name);
     if (sortBy === 'za') return b.name.localeCompare(a.name);
     if (sortBy === 'lowest_price') return a.pix_price - b.pix_price;
@@ -229,6 +234,7 @@ export default function ProductList({ initialSort = 'newest' }: ProductListProps
                 className="appearance-none w-full sm:w-48 pl-4 pr-10 py-3 bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors cursor-pointer"
               >
                 <option value="newest">Mais Recentes</option>
+                <option value="promo_first">Promoções Primeiro</option>
                 <option value="az">Ordenar de A-Z</option>
                 <option value="za">Ordenar de Z-A</option>
                 <option value="lowest_price">Menor Preço</option>

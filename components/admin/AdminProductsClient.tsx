@@ -6,6 +6,7 @@ import { Plus, Edit, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown } from 'lu
 import Image from 'next/image';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
 import MarkAsSoldButton from '@/components/admin/MarkAsSoldButton';
+import StockToggle from '@/components/admin/StockToggle';
 import { Product } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
@@ -56,6 +57,12 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
         aValue = a.pix_price - a.cost_price;
         bValue = b.pix_price - b.cost_price;
       }
+      
+      // Handle boolean for promo
+      if (key === 'is_promo_active') {
+        aValue = a.is_promo_active ? 1 : 0;
+        bValue = b.is_promo_active ? 1 : 0;
+      }
 
       if (aValue < bValue) {
         return direction === 'asc' ? -1 : 1;
@@ -103,6 +110,10 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
     }
   };
 
+  const handleStockUpdate = (productId: string, newStatus: boolean) => {
+    setProducts(products.map(p => p.id === productId ? { ...p, is_out_of_stock: newStatus } : p));
+  };
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -119,6 +130,7 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
               className="bg-transparent text-text-main text-sm focus:outline-none cursor-pointer w-full"
             >
               <option value="newest">Mais Recentes</option>
+              <option value="promo_first">Promoções Primeiro</option>
               <option value="az">A-Z</option>
               <option value="za">Z-A</option>
               <option value="lowest_price">Menor Preço</option>
@@ -135,7 +147,7 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
 
       <div className="bg-background-secondary rounded-xl border border-background-tertiary overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="border-b border-background-tertiary bg-background-main/50">
                 <th 
@@ -145,6 +157,12 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                   Produto {getSortIcon('name')}
                 </th>
                 <th className="p-4 text-sm font-medium text-text-support">SKU</th>
+                <th 
+                  className="p-4 text-sm font-medium text-text-support cursor-pointer hover:text-text-main transition-colors"
+                  onClick={() => handleSort('is_promo_active')}
+                >
+                  Promoção {getSortIcon('is_promo_active')}
+                </th>
                 <th className="p-4 text-sm font-medium text-text-support">Estoque</th>
                 <th className="p-4 text-sm font-medium text-text-support">Custo</th>
                 <th 
@@ -159,45 +177,67 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                 >
                   Lucro Real {getSortIcon('profit')}
                 </th>
-                <th className="p-4 text-sm font-medium text-text-support">Margem</th>
                 <th className="p-4 text-sm font-medium text-text-support text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => {
-                const profit = product.pix_price - product.cost_price;
-                const margin = product.cost_price > 0 ? (profit / product.cost_price) * 100 : 0;
+                let currentPixPrice = product.pix_price;
+                if (product.is_promo_active) {
+                  if (product.discount_type === 'percentage') {
+                    currentPixPrice = product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100));
+                  } else {
+                    currentPixPrice = product.pix_price - (product.discount_amount || 0);
+                  }
+                  currentPixPrice = Math.max(0, currentPixPrice);
+                }
+                
+                const profit = currentPixPrice - product.cost_price;
                 
                 return (
                   <tr key={product.id} className="border-b border-background-tertiary hover:bg-background-main/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded overflow-hidden bg-background-tertiary">
+                        <div className="relative w-10 h-10 rounded overflow-hidden bg-background-tertiary flex-shrink-0">
                           <Image src={getImageUrl(product)} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
                         </div>
-                        <div>
-                          <p className="font-medium text-text-main line-clamp-1">{product.name}</p>
-                          <p className="text-xs text-text-support">{product.category}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-text-main truncate">{product.name}</p>
+                          <p className="text-xs text-text-support truncate">{product.category}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-sm text-text-main">{product.sku}</td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium ${product.is_out_of_stock ? 'text-danger' : 'text-success'}`}>
-                          {product.is_out_of_stock ? 'Esgotado' : 'Em Estoque'}
+                      {product.is_promo_active ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-primary/20 text-primary border border-primary/30">
+                          ATIVO
                         </span>
-                        {product.is_out_of_stock && (
-                          <span title="Esgotado">
-                            <AlertCircle className="w-4 h-4 text-danger" />
-                          </span>
-                        )}
-                      </div>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-background-tertiary" title="Sem promoção">
+                          <span className="w-2 h-2 rounded-full bg-text-support/50"></span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <StockToggle 
+                        productId={product.id} 
+                        initialIsOutOfStock={product.is_out_of_stock} 
+                        onUpdate={(newStatus) => handleStockUpdate(product.id, newStatus)}
+                      />
                     </td>
                     <td className="p-4 text-sm text-text-support">{formatCurrency(product.cost_price)}</td>
-                    <td className="p-4 text-sm font-medium text-success">{formatCurrency(product.pix_price)}</td>
+                    <td className="p-4 text-sm font-medium text-success">
+                      {product.is_promo_active ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs text-text-support line-through">{formatCurrency(product.pix_price)}</span>
+                          <span className="text-primary">{formatCurrency(currentPixPrice)}</span>
+                        </div>
+                      ) : (
+                        formatCurrency(product.pix_price)
+                      )}
+                    </td>
                     <td className="p-4 text-sm text-accent">{formatCurrency(profit)}</td>
-                    <td className="p-4 text-sm text-accent">{margin.toFixed(1)}%</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <MarkAsSoldButton product={product} />
