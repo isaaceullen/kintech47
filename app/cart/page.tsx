@@ -59,7 +59,7 @@ export default function CartPage() {
       message += `\n\nPor favor, confirme meu pedido!`;
 
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/5547992155024?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/5547988692150?text=${encodedMessage}`;
       
       window.open(whatsappUrl, '_blank');
     } catch (error) {
