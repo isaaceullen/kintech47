@@ -29,6 +29,8 @@ export type Popup = {
   button_text: string | null;
   button_link: string | null;
   is_active: boolean;
+  target_type?: 'home' | 'cart' | 'all_products' | 'specific_product' | 'all_pages';
+  target_product_id?: string | null;
 };
 
 export type Category = {

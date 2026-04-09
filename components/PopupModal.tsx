@@ -3,14 +3,17 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname, useParams } from 'next/navigation';
 import { X } from 'lucide-react';
 import { Popup } from '@/types/database';
-import { getActivePopup } from '@/lib/api';
+import { getActivePopups, getProductBySku } from '@/lib/api';
 import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function PopupModal() {
   const [popup, setPopup] = useState<Popup | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+  const params = useParams();
 
   useEffect(() => {
     async function loadPopup() {
@@ -18,14 +21,46 @@ export default function PopupModal() {
       const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
       if (hasSeenPopup) return;
 
-      const activePopup = await getActivePopup();
-      if (activePopup) {
-        setPopup(activePopup);
+      const activePopups = await getActivePopups();
+      if (!activePopups || activePopups.length === 0) return;
+
+      let selectedPopup: Popup | null = null;
+
+      // Check for 'all_pages' first
+      const allPagesPopup = activePopups.find(p => p.target_type === 'all_pages');
+      if (allPagesPopup) {
+        selectedPopup = allPagesPopup;
+      } else {
+        // Determine current page type
+        if (pathname === '/') {
+          selectedPopup = activePopups.find(p => p.target_type === 'home' || !p.target_type) || null;
+        } else if (pathname === '/cart') {
+          selectedPopup = activePopups.find(p => p.target_type === 'cart') || null;
+        } else if (pathname === '/products') {
+          selectedPopup = activePopups.find(p => p.target_type === 'all_products') || null;
+        } else if (pathname.startsWith('/') && pathname !== '/' && pathname !== '/cart' && !pathname.startsWith('/admin')) {
+          // Might be a specific product page
+          const sku = params?.sku as string;
+          if (sku) {
+            const product = await getProductBySku(sku);
+            if (product) {
+              selectedPopup = activePopups.find(p => p.target_type === 'specific_product' && p.target_product_id === product.id) || null;
+            }
+          }
+          // Fallback to all_products if no specific popup found
+          if (!selectedPopup) {
+            selectedPopup = activePopups.find(p => p.target_type === 'all_products') || null;
+          }
+        }
+      }
+
+      if (selectedPopup) {
+        setPopup(selectedPopup);
         setIsOpen(true);
       }
     }
     loadPopup();
-  }, []);
+  }, [pathname, params]);
 
   const closePopup = () => {
     if (popup) {

@@ -122,10 +122,10 @@ export async function getCategories(): Promise<Category[]> {
   }
 }
 
-export async function getActivePopup(): Promise<Popup | null> {
+export async function getActivePopups(): Promise<Popup[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      return MOCK_POPUPS.find(p => p.is_active) || null;
+      return MOCK_POPUPS.filter(p => p.is_active);
     }
 
     const supabase = createClient();
@@ -133,14 +133,12 @@ export async function getActivePopup(): Promise<Popup | null> {
       .from('popups')
       .select('*')
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .order('created_at', { ascending: false });
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is no rows returned
-    return data || null;
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error('Error fetching active popup:', error);
-    return MOCK_POPUPS.find(p => p.is_active) || null;
+    console.error('Error fetching active popups:', error);
+    return MOCK_POPUPS.filter(p => p.is_active);
   }
 }

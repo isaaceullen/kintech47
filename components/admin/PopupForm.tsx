@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Popup } from '@/types/database';
+import { Popup, Product } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import { Save, Loader2, Image as ImageIcon, Trash2 } from 'lucide-react';
 import Image from 'next/image';
@@ -16,6 +16,7 @@ export default function PopupForm({ initialData }: PopupFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -24,9 +25,25 @@ export default function PopupForm({ initialData }: PopupFormProps) {
     button_text: initialData?.button_text || '',
     button_link: initialData?.button_link || '',
     is_active: initialData?.is_active || false,
+    target_type: initialData?.target_type || 'all_pages',
+    target_product_id: initialData?.target_product_id || '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    async function loadProducts() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, sku')
+        .order('name');
+      if (data) {
+        setProducts(data as Product[]);
+      }
+    }
+    loadProducts();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -72,12 +89,46 @@ export default function PopupForm({ initialData }: PopupFormProps) {
     try {
       const supabase = createClient();
 
-      // If setting this to active, we need to deactivate others
       if (formData.is_active) {
-        await supabase
+        // Fetch active popups excluding current one
+        const { data: activePopups, error: fetchError } = await supabase
           .from('popups')
-          .update({ is_active: false })
-          .neq('id', initialData?.id || '00000000-0000-0000-0000-000000000000'); // Dummy UUID if new
+          .select('*')
+          .eq('is_active', true)
+          .neq('id', initialData?.id || '00000000-0000-0000-0000-000000000000');
+
+        if (fetchError) throw fetchError;
+
+        if (activePopups && activePopups.length > 0) {
+          if (formData.target_type === 'all_pages') {
+            toast.error("Erro: Não é possível ativar para 'Todas as Páginas' enquanto houver pop-ups ativos em páginas específicas. Desative-os primeiro.");
+            setIsSubmitting(false);
+            return;
+          } else {
+            const hasAllPagesActive = activePopups.some(p => p.target_type === 'all_pages');
+            if (hasAllPagesActive) {
+              toast.error("Erro: Já existe um pop-up ativo para 'Todas as Páginas'. Desative-o para usar pop-ups segmentados.");
+              setIsSubmitting(false);
+              return;
+            }
+
+            const hasSameTargetActive = activePopups.some(p => {
+              if (p.target_type === formData.target_type) {
+                if (formData.target_type === 'specific_product') {
+                  return p.target_product_id === formData.target_product_id;
+                }
+                return true;
+              }
+              return false;
+            });
+
+            if (hasSameTargetActive) {
+              toast.error("Erro: Já existe um pop-up ativo para esta página específica.");
+              setIsSubmitting(false);
+              return;
+            }
+          }
+        }
       }
 
       const popupData = {
@@ -87,6 +138,8 @@ export default function PopupForm({ initialData }: PopupFormProps) {
         button_text: formData.button_text || null,
         button_link: formData.button_link || null,
         is_active: formData.is_active,
+        target_type: formData.target_type,
+        target_product_id: formData.target_type === 'specific_product' ? formData.target_product_id : null,
       };
 
       if (initialData?.id) {
@@ -162,6 +215,42 @@ export default function PopupForm({ initialData }: PopupFormProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-text-support mb-2">Onde exibir este pop-up? *</label>
+            <select
+              name="target_type"
+              value={formData.target_type}
+              onChange={handleChange}
+              className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary appearance-none"
+            >
+              <option value="all_pages">Todas as Páginas</option>
+              <option value="home">Home</option>
+              <option value="cart">Carrinho</option>
+              <option value="all_products">Todos os Produtos</option>
+              <option value="specific_product">Produto Específico</option>
+            </select>
+          </div>
+
+          {formData.target_type === 'specific_product' && (
+            <div>
+              <label className="block text-sm font-medium text-text-support mb-2">Selecione o Produto *</label>
+              <select
+                name="target_product_id"
+                value={formData.target_product_id}
+                onChange={handleChange}
+                required={formData.target_type === 'specific_product'}
+                className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary appearance-none"
+              >
+                <option value="">Selecione um produto...</option>
+                {products.map(product => (
+                  <option key={product.id} value={product.id}>
+                    {product.name} (SKU: {product.sku})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-text-support mb-2">Título *</label>
             <input 

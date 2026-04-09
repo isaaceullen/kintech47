@@ -1,6 +1,5 @@
 import Navbar from '@/components/Navbar';
 import ProductList from '@/components/ProductList';
-import PopupModal from '@/components/PopupModal';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -33,7 +32,6 @@ export default async function Home() {
         </div>
         <ProductList initialSort={defaultSort} />
       </main>
-      <PopupModal />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Toaster } from 'react-hot-toast';
 import Script from 'next/script';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import PopupModal from '@/components/PopupModal';
 import './globals.css'; // Global styles
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="pt-br">
       <body suppressHydrationWarning>
         {children}
+        <PopupModal />
         <Toaster position="bottom-right" />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-TWWY3KG6YK" strategy="afterInteractive" />
         <GoogleAnalytics />
