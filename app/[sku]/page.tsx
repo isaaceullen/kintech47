@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import Navbar from '@/components/Navbar';
@@ -9,6 +10,42 @@ import ProductCard from '@/components/ProductCard';
 import ProductGallery from '@/components/ProductGallery';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ sku: string }> }): Promise<Metadata> {
+  const { sku } = await params;
+  
+  try {
+    const supabase = await createClient();
+    const { data: product } = await supabase
+      .from('products')
+      .select('*')
+      .eq('sku', sku)
+      .single();
+
+    if (!product) {
+      return {
+        title: 'Produto não encontrado',
+      };
+    }
+
+    const title = product.seo_title || product.name;
+    const description = product.seo_description || product.description.substring(0, 160);
+
+    return {
+      title: `${title} | Kintech47`,
+      description: description,
+      openGraph: {
+        title: title,
+        description: description,
+        images: product.image_urls?.[0] ? [product.image_urls[0]] : [],
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Produto',
+    };
+  }
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ sku: string }> }) {
   const { sku } = await params;
@@ -58,8 +95,34 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
     }).format(value);
   };
 
+  const finalPrice = product.is_promo_active 
+    ? Math.max(0, product.discount_type === 'percentage' 
+        ? product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100))
+        : product.pix_price - (product.discount_amount || 0))
+    : product.pix_price;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.image_urls?.[0] || '',
+    description: product.description,
+    sku: product.sku,
+    offers: {
+      '@type': 'Offer',
+      url: `https://kintech47.com.br/${product.sku}`, // Replace with actual domain
+      priceCurrency: 'BRL',
+      price: finalPrice,
+      availability: product.is_out_of_stock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+    },
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <Link href="/" className="inline-flex items-center text-text-support hover:text-primary mb-6 transition-colors">

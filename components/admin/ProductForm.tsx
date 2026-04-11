@@ -21,6 +21,8 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
   const [cardPrice, setCardPrice] = useState(Number(initialData?.card_price || 0));
   const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialData?.is_out_of_stock));
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
+  const [seoTitle, setSeoTitle] = useState(initialData?.seo_title || '');
+  const [seoDescription, setSeoDescription] = useState(initialData?.seo_description || '');
   
   const [isPromoActive, setIsPromoActive] = useState(Boolean(initialData?.is_promo_active));
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>(initialData?.discount_type || 'percentage');
@@ -151,6 +153,8 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
         is_promo_active: isPromoActive,
         discount_type: discountType,
         discount_amount: discountAmount,
+        seo_title: seoTitle,
+        seo_description: seoDescription,
       };
 
       let error;
@@ -425,6 +429,42 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
           />
         </div>
         
+        <div className="md:col-span-2 border-t border-background-tertiary pt-6 mt-2">
+          <h3 className="text-lg font-bold text-text-main mb-4">SEO (Google)</h3>
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="block text-sm font-medium text-text-support">Título para o Google</label>
+                <span className={`text-xs ${seoTitle.length > 60 ? 'text-danger' : 'text-text-support'}`}>
+                  {seoTitle.length} / 60 caracteres (ideal)
+                </span>
+              </div>
+              <input 
+                type="text" 
+                value={seoTitle}
+                onChange={(e) => setSeoTitle(e.target.value)}
+                placeholder="Ex: Perfume X 100ml Original - Melhor Preço"
+                className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <div className="flex justify-between mb-2">
+                <label className="block text-sm font-medium text-text-support">Descrição para o Google</label>
+                <span className={`text-xs ${seoDescription.length > 160 ? 'text-danger' : 'text-text-support'}`}>
+                  {seoDescription.length} / 160 caracteres (ideal)
+                </span>
+              </div>
+              <textarea 
+                rows={3}
+                value={seoDescription}
+                onChange={(e) => setSeoDescription(e.target.value)}
+                placeholder="Uma breve descrição chamativa sobre o produto para aparecer nos resultados de busca."
+                className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-text-support mb-4">Imagens do Produto (Máx. 3)</label>
           

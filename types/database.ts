@@ -14,6 +14,8 @@ export type Product = {
   is_promo_active?: boolean;
   discount_type?: 'percentage' | 'fixed';
   discount_amount?: number;
+  seo_title?: string;
+  seo_description?: string;
 };
 
 export type CartItem = Product & {
