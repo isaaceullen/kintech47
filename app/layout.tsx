@@ -9,8 +9,8 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import './globals.css'; // Global styles
 
 export const metadata: Metadata = {
-  title: 'Kintech47',
-  description: 'Importados Joinville',
+  title: 'Kintech47 | Importados em Joinville',
+  description: 'Melhores produtos importados em Joinville. Qualidade garantida e preço justo.',
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },

@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://kintech47.com.br'; // Replace with actual domain
+  const baseUrl = 'https://kintech47.vercel.app'; // Replace with actual domain
 
   const supabase = await createClient();
   const { data: products } = await supabase
