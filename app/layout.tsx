@@ -4,7 +4,6 @@ import Script from 'next/script';
 import { Suspense } from 'react';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
-import PopupModal from '@/components/PopupModal';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import './globals.css'; // Global styles
 
@@ -44,7 +43,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body suppressHydrationWarning>
         {children}
         <WhatsAppButton />
-        <PopupModal />
         <Toaster position="bottom-right" />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-TWWY3KG6YK" strategy="afterInteractive" />
         <Suspense fallback={null}>

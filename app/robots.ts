@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin', '/admin/', '/api/'],
+      disallow: '/admin',
     },
-    sitemap: 'https://kintech47.vercel.app/sitemap.xml', // Replace with actual domai
+    sitemap: 'https://kintech47.vercel.app/sitemap.xml',
   };
 }
