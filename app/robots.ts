@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin', '/admin/', '/api/'],
     },
-    sitemap: 'https://kintech47.vercel.app/sitemap.xml', // Replace with actual domain
+    sitemap: 'https://kintech47.vercel.app/sitemap.xml', // Replace with actual domai
   };
 }
