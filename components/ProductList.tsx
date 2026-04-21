@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { Product, Category } from '@/types/database';
-import { getProducts, getCategories } from '@/lib/api';
+import { getProducts, getProductsByCategory, getCategories } from '@/lib/api';
 import ProductCard from './ProductCard';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
 interface ProductListProps {
   initialSort?: string;
+  initialCategorySlug?: string;
 }
 
-export default function ProductList({ initialSort = 'newest' }: ProductListProps) {
+export default function ProductList({ initialSort = 'newest', initialCategorySlug }: ProductListProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,16 +33,23 @@ export default function ProductList({ initialSort = 'newest' }: ProductListProps
 
   useEffect(() => {
     async function loadData() {
-      const [productsData, categoriesData] = await Promise.all([
-        getProducts(),
-        getCategories()
-      ]);
-      setProducts(productsData);
+      const categoriesData = await getCategories();
       setCategories(categoriesData);
+
+      let productsData = [];
+      if (initialCategorySlug) {
+        productsData = await getProductsByCategory(initialCategorySlug);
+        const cat = categoriesData.find(c => c.slug === initialCategorySlug);
+        if (cat) setSelectedCategory(cat.name);
+      } else {
+        productsData = await getProducts();
+      }
+      
+      setProducts(productsData);
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [initialCategorySlug]);
 
   // Debounce for minPrice
   useEffect(() => {
@@ -103,20 +112,22 @@ export default function ProductList({ initialSort = 'newest' }: ProductListProps
       <div>
         <h3 className="text-lg font-bold text-text-main mb-4 border-b border-background-tertiary pb-2">Categorias</h3>
         <div className="space-y-2">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === 'all' ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
+          <Link
+            href="/"
+            onClick={() => isMobile && setIsMobileFiltersOpen(false)}
+            className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === 'all' ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
           >
             Todas as Categorias
-          </button>
+          </Link>
           {categories.map(cat => (
-            <button
+            <Link
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.name)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat.name ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
+              href={`/categoria/${cat.slug}`}
+              onClick={() => isMobile && setIsMobileFiltersOpen(false)}
+              className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat.name ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
             >
               {cat.name}
-            </button>
+            </Link>
           ))}
         </div>
       </div>

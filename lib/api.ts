@@ -111,6 +111,33 @@ export async function getProductBySku(sku: string): Promise<Product | null> {
   }
 }
 
+export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
+  try {
+    const categories = await getCategories();
+    const category = categories.find(c => c.slug === categorySlug);
+    
+    if (!category) return [];
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+      return MOCK_PRODUCTS.filter(p => p.category === category.name && p.is_active !== false);
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category', category.name)
+      .or('is_active.eq.true,is_active.is.null')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    return [];
+  }
+}
+
 export async function getCategories(): Promise<Category[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
