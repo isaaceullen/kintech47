@@ -239,7 +239,15 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-text-main">{product.sku}</td>
+                    <td className="p-4 text-sm text-text-main">
+                      <Link 
+                        href={`/${product.sku}`} 
+                        target="_blank" 
+                        className="hover:text-primary transition-colors underline-offset-4 hover:underline"
+                      >
+                        {product.sku}
+                      </Link>
+                    </td>
                     <td className="p-4">
                       {product.is_promo_active ? (
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-primary/20 text-primary border border-primary/30">
