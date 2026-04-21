@@ -1,24 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, Edit, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Power, PowerOff } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { Plus, Edit, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Power } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
 import MarkAsSoldButton from '@/components/admin/MarkAsSoldButton';
 import StockToggle from '@/components/admin/StockToggle';
 import { Product } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
-import { trackEvent } from '@/components/GoogleAnalytics';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 
 type SortConfig = {
   key: string;
@@ -33,10 +25,39 @@ type AdminProductsClientProps = {
 export default function AdminProductsClient({ initialProducts, initialDefaultSort }: AdminProductsClientProps) {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.actions-menu-container')) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleToggleActive = async (productId: string, currentStatus: boolean) => {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('products')
+        .update({ is_active: !currentStatus })
+        .eq('id', productId);
+
+      if (error) throw error;
+      
+      setProducts(products.map(p => p.id === productId ? { ...p, is_active: !currentStatus } : p));
+      toast.success(`Produto ${currentStatus ? 'desativado' : 'ativado'} com sucesso!`);
+    } catch (error: any) {
+      console.error('Error toggling product status:', error);
+      toast.error('Erro ao alterar status do produto: ' + error.message);
+    }
+  };
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [defaultSort, setDefaultSort] = useState(initialDefaultSort);
   const [isUpdatingSort, setIsUpdatingSort] = useState(false);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -125,34 +146,6 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
     setProducts(products.map(p => p.id === productId ? { ...p, is_out_of_stock: newStatus } : p));
   };
 
-  const toggleActiveStatus = async (product: Product) => {
-    setIsUpdatingStatus(product.id);
-    const newStatus = !product.is_active;
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('products')
-        .update({ is_active: newStatus })
-        .eq('id', product.id);
-
-      if (error) throw error;
-      
-      setProducts(products.map(p => p.id === product.id ? { ...p, is_active: newStatus } : p));
-      toast.success(newStatus ? 'Produto ativado!' : 'Produto desativado!');
-      trackEvent('toggle_product_status', { 
-        product_id: product.id, 
-        product_name: product.name, 
-        new_status: newStatus ? 'active' : 'inactive' 
-      });
-    } catch (error) {
-      console.error('Error toggling status:', error);
-      toast.error('Erro ao alterar status do produto.');
-    } finally {
-      setIsUpdatingStatus(null);
-    }
-  };
-
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -210,6 +203,12 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                 >
                   Venda (PIX) {getSortIcon('pix_price')}
                 </th>
+                <th 
+                  className="p-4 text-sm font-medium text-text-support cursor-pointer hover:text-text-main transition-colors"
+                  onClick={() => handleSort('profit')}
+                >
+                  Lucro Real {getSortIcon('profit')}
+                </th>
                 <th className="p-4 text-sm font-medium text-text-support text-right">Ações</th>
               </tr>
             </thead>
@@ -225,25 +224,17 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                   currentPixPrice = Math.max(0, currentPixPrice);
                 }
                 
-                const isActive = product.is_active !== false; // Default to true if undefined
+                const profit = currentPixPrice - product.cost_price;
                 
                 return (
-                  <tr 
-                    key={product.id} 
-                    className={`border-b border-background-tertiary hover:bg-background-main/50 transition-colors ${!isActive ? 'opacity-50 grayscale-[0.5] bg-black/20' : ''}`}
-                  >
+                  <tr key={product.id} className={`border-b border-background-tertiary transition-colors ${product.is_active === false ? 'opacity-50 grayscale-[0.5] bg-background-main hover:bg-background-main/80' : 'hover:bg-background-main/50'}`}>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="relative w-10 h-10 rounded overflow-hidden bg-background-tertiary flex-shrink-0">
                           <Image src={getImageUrl(product)} alt={product.name} fill className="object-cover" referrerPolicy="no-referrer" />
                         </div>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-text-main truncate">{product.name}</p>
-                            {!isActive && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-background-tertiary text-text-support uppercase font-bold">Inativo</span>
-                            )}
-                          </div>
+                          <p className="font-medium text-text-main truncate">{product.name}</p>
                           <p className="text-xs text-text-support truncate">{product.category}</p>
                         </div>
                       </div>
@@ -278,55 +269,55 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                         formatCurrency(product.pix_price)
                       )}
                     </td>
+                    <td className="p-4 text-sm text-accent">{formatCurrency(profit)}</td>
                     <td className="p-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="p-2 text-text-support hover:text-text-main transition-colors rounded-lg hover:bg-background-tertiary">
+                      <div className="relative inline-block text-left actions-menu-container">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === product.id ? null : product.id)}
+                          className="p-2 text-text-support hover:text-text-main transition-colors rounded-lg hover:bg-background-tertiary"
+                        >
                           <MoreVertical className="w-5 h-5" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-background-secondary border-background-tertiary text-text-main">
-                          <DropdownMenuItem 
-                            onClick={() => router.push(`/admin/products/${product.id}/edit`)}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            <Edit className="w-4 h-4" />
-                            Editar Produto
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuSeparator className="bg-background-tertiary" />
-                          
-                          <DropdownMenuItem 
-                            onClick={() => toggleActiveStatus(product)}
-                            disabled={isUpdatingStatus === product.id}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            {isActive ? (
-                              <>
-                                <PowerOff className="w-4 h-4 text-danger" />
-                                Desativar
-                              </>
-                            ) : (
-                              <>
-                                <Power className="w-4 h-4 text-success" />
-                                Ativar
-                              </>
-                            )}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem className="focus:bg-transparent p-0">
-                            <div className="w-full">
-                               <MarkAsSoldButton product={product} variant="menuItem" />
-                            </div>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuSeparator className="bg-background-tertiary" />
-                          
-                          <DropdownMenuItem className="focus:bg-transparent p-0">
-                            <div className="w-full">
-                              <DeleteProductButton productId={product.id} imageUrls={product.image_urls || []} variant="menuItem" />
-                            </div>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </button>
+                        
+                        {openMenuId === product.id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-background-secondary border border-background-tertiary rounded-lg shadow-lg z-50 py-1 flex flex-col">
+                            <MarkAsSoldButton 
+                              product={product} 
+                              triggerMode="menuItem" 
+                              onOpenModal={() => setOpenMenuId(null)} 
+                            />
+                            
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                router.push(`/admin/products/${product.id}/edit`);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-background-tertiary transition-colors flex items-center gap-2"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Editar
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                handleToggleActive(product.id, product.is_active ?? true);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-background-tertiary transition-colors flex items-center gap-2"
+                            >
+                              <Power className="w-4 h-4" />
+                              {product.is_active === false ? 'Ativar Produto' : 'Desativar Produto'}
+                            </button>
+                            
+                            <DeleteProductButton 
+                              productId={product.id} 
+                              imageUrls={product.image_urls || []} 
+                              triggerMode="menuItem"
+                              onOpenModal={() => setOpenMenuId(null)}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -345,4 +336,3 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
     </div>
   );
 }
-

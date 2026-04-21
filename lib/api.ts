@@ -14,6 +14,7 @@ const MOCK_PRODUCTS: Product[] = [
     card_price: 3800,
     image_urls: ['https://picsum.photos/seed/smartphone/400/400'],
     is_out_of_stock: false,
+    is_active: true,
   },
   {
     id: '2',
@@ -27,6 +28,7 @@ const MOCK_PRODUCTS: Product[] = [
     card_price: 850,
     image_urls: ['https://picsum.photos/seed/headphones/400/400'],
     is_out_of_stock: false,
+    is_active: true,
   },
   {
     id: '3',
@@ -40,6 +42,7 @@ const MOCK_PRODUCTS: Product[] = [
     card_price: 1300,
     image_urls: ['https://picsum.photos/seed/smartwatch/400/400'],
     is_out_of_stock: true,
+    is_active: true,
   }
 ];
 
@@ -61,22 +64,23 @@ const MOCK_CATEGORIES: Category[] = [
   { id: '2', created_at: new Date().toISOString(), name: 'Acessórios', slug: 'acessorios' },
 ];
 
-export async function getProducts(includeInactive: boolean = false): Promise<Product[]> {
+export async function getProducts(activeOnly: boolean = true): Promise<Product[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      return MOCK_PRODUCTS.filter(p => includeInactive || p.is_active !== false);
+      return activeOnly ? MOCK_PRODUCTS.filter(p => p.is_active !== false) : MOCK_PRODUCTS;
     }
     
     const supabase = createClient();
     let query = supabase
       .from('products')
-      .select('*');
-    
-    if (!includeInactive) {
-      query = query.eq('is_active', true);
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (activeOnly) {
+      query = query.or('is_active.eq.true,is_active.is.null'); // Some old products may not have is_active defined
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query;
 
     if (error) throw error;
     return data || [];

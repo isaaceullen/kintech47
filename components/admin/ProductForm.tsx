@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wand2, Save, ArrowLeft, Upload, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Wand2, Save, ArrowLeft, Upload, Link as LinkIcon, Trash2, Power } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
-import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function ProductForm({ initialData, categories = [] }: { initialData?: any, categories?: any[] }) {
   const router = useRouter();
@@ -21,7 +20,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
   const [pixPrice, setPixPrice] = useState(Number(initialData?.pix_price || 0));
   const [cardPrice, setCardPrice] = useState(Number(initialData?.card_price || 0));
   const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialData?.is_out_of_stock));
-  const [isActive, setIsActive] = useState(initialData?.is_active !== false); // Default to true
+  const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   const [seoTitle, setSeoTitle] = useState(initialData?.seo_title || '');
   const [seoDescription, setSeoDescription] = useState(initialData?.seo_description || '');
@@ -183,15 +182,6 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
       }
       
       toast.success('Produto salvo com sucesso!');
-      
-      trackEvent('save_product', {
-        product_id: initialData?.id || 'new',
-        product_name: name,
-        category: category,
-        is_promo: isPromoActive,
-        is_active: isActive
-      });
-
       router.push('/admin/products');
       router.refresh();
     } catch (error: any) {
@@ -211,11 +201,24 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
 
   return (
     <form onSubmit={handleSubmit} className="bg-background-secondary rounded-xl border border-background-tertiary p-6 max-w-4xl">
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
         <Link href="/admin/products" className="inline-flex items-center text-text-support hover:text-primary transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar
         </Link>
+        
+        <button
+          type="button"
+          onClick={() => setIsActive(!isActive)}
+          className={`px-4 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center gap-2 outline-none ${
+            isActive 
+              ? 'text-danger border-danger/30 hover:bg-danger/10' 
+              : 'text-success border-success/30 hover:bg-success/10'
+          }`}
+        >
+          <Power className="w-4 h-4" />
+          {isActive ? 'Desativar Produto' : 'Ativar Produto'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -309,27 +312,6 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
               </div>
               <div className="ml-3 text-sm font-medium text-text-main">
                 {isOutOfStock ? 'Esgotado' : 'Em Estoque'}
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-text-support mb-2">Visibilidade</label>
-          <div className="flex items-center h-10">
-            <label className="flex items-center cursor-pointer">
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  className="sr-only"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                />
-                <div className={`block w-14 h-8 rounded-full transition-colors ${isActive ? 'bg-primary' : 'bg-background-tertiary'}`}></div>
-                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isActive ? 'transform translate-x-6' : ''}`}></div>
-              </div>
-              <div className="ml-3 text-sm font-medium text-text-main">
-                {isActive ? 'Ativo no Catálogo' : 'Inativo / Oculto'}
               </div>
             </label>
           </div>
