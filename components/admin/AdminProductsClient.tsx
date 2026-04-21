@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Power } from 'lucide-react';
+import { Plus, Edit, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Power, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
@@ -58,6 +58,50 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [defaultSort, setDefaultSort] = useState(initialDefaultSort);
   const [isUpdatingSort, setIsUpdatingSort] = useState(false);
+  const [isDuplicatingId, setIsDuplicatingId] = useState<string | null>(null);
+
+  const handleDuplicate = async (product: Product) => {
+    setOpenMenuId(null);
+    setIsDuplicatingId(product.id);
+    
+    try {
+      const supabase = createClient();
+      const productData = {
+        sku: '',
+        name: `${product.name} (Cópia)`,
+        category: product.category,
+        description: product.description,
+        cost_price: product.cost_price,
+        pix_price: product.pix_price,
+        card_price: product.card_price,
+        image_urls: product.image_urls,
+        video_urls: product.video_urls,
+        external_link: product.external_link,
+        is_out_of_stock: product.is_out_of_stock,
+        is_promo_active: product.is_promo_active,
+        discount_type: product.discount_type,
+        discount_amount: product.discount_amount,
+        seo_title: product.seo_title,
+        seo_description: product.seo_description,
+        is_active: false,
+      };
+
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+
+      if (error) throw error;
+      
+      toast.success('Produto duplicado com sucesso! Lembre-se de definir um novo SKU.');
+      router.refresh();
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error: any) {
+      console.error('Error duplicating product:', error);
+      toast.error('Erro ao duplicar produto: ' + error.message);
+    } finally {
+      setIsDuplicatingId(null);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -304,6 +348,19 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                             >
                               <Edit className="w-4 h-4" />
                               Editar
+                            </button>
+
+                            <button
+                              onClick={() => handleDuplicate(product)}
+                              disabled={isDuplicatingId === product.id}
+                              className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-background-tertiary transition-colors flex items-center gap-2"
+                            >
+                              {isDuplicatingId === product.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-primary"></div>
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                              Duplicar
                             </button>
                             
                             <button
