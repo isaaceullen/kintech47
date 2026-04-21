@@ -1,28 +1,58 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-background-main: #0B132B;
   --color-background-secondary: #14213D;
   --color-background-tertiary: #1D2D50;
-  
+
   /* CORES DE TEXTO AJUSTADAS PARA ALTO CONTRASTE */
   --color-text-main: #FFFFFF;         /* Branco Puro (Títulos) */
   --color-text-support: #D1D5DB;      /* Cinza Claro/Prata (Descrições e Labels) */
   --color-text-reading: #F3F4F6;      /* Branco Gelo (Textos de leitura longa) */
-  
+
   --color-primary: #C5A059;
   --color-primary-hover: #A38345;
   --color-accent: #D4BC8D;
-  
+
   --color-success: #22c55e;
   --color-danger: #ef4444;
+
+  --color-border: #1D2D50;
+  --color-input: #1D2D50;
+  --color-ring: #C5A059;
+  --color-background: #0B132B;
+  --color-foreground: #FFFFFF;
+  
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
 }
 
 @layer base {
   :root {
-    --background: var(--color-background-main);
-    --foreground: var(--color-text-main);
+    --background: #0B132B;
+    --foreground: #FFFFFF;
+    --card: #14213D;
+    --card-foreground: #FFFFFF;
+    --popover: #14213D;
+    --popover-foreground: #FFFFFF;
+    --primary: #C5A059;
+    --primary-foreground: #0B132B;
+    --secondary: #1D2D50;
+    --secondary-foreground: #FFFFFF;
+    --muted: #1D2D50;
+    --muted-foreground: #D1D5DB;
+    --accent: #1D2D50;
+    --accent-foreground: #FFFFFF;
+    --destructive: #ef4444;
+    --destructive-foreground: #FFFFFF;
+    --border: #1D2D50;
+    --input: #1D2D50;
+    --ring: #C5A059;
   }
   body {
     background-color: var(--background);

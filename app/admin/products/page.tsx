@@ -36,7 +36,7 @@ export default async function AdminProducts() {
     console.error('Supabase fetch error:', err);
     // Fallback to mock data if Supabase fails
     const { getProducts } = await import('@/lib/api');
-    productList = await getProducts();
+    productList = await getProducts(true);
   }
 
   return <AdminProductsClient initialProducts={productList} initialDefaultSort={defaultSort} />;

@@ -61,17 +61,22 @@ const MOCK_CATEGORIES: Category[] = [
   { id: '2', created_at: new Date().toISOString(), name: 'Acessórios', slug: 'acessorios' },
 ];
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(includeInactive: boolean = false): Promise<Product[]> {
   try {
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      return MOCK_PRODUCTS;
+      return MOCK_PRODUCTS.filter(p => includeInactive || p.is_active !== false);
     }
     
     const supabase = createClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*');
+    
+    if (!includeInactive) {
+      query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
     return data || [];

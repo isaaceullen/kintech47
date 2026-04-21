@@ -6,6 +6,11 @@ import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import './globals.css';
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 // 1. Metadados para o Next.js (Mantenha para SEO interno)
 export const metadata: Metadata = {
@@ -15,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-br">
+    <html lang="pt-br" className={cn("font-sans", geist.variable)}>
       <head>
         {/* 2. TAG DE VERIFICAÇÃO MANUAL (O PULO DO GATO) */}
         <meta name="google-site-verification" content="google2cbc8075d15b194f" />

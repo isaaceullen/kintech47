@@ -20,6 +20,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
   const [pixPrice, setPixPrice] = useState(Number(initialData?.pix_price || 0));
   const [cardPrice, setCardPrice] = useState(Number(initialData?.card_price || 0));
   const [isOutOfStock, setIsOutOfStock] = useState(Boolean(initialData?.is_out_of_stock));
+  const [isActive, setIsActive] = useState(initialData?.is_active !== false); // Default to true
   const [externalLink, setExternalLink] = useState(initialData?.external_link || '');
   const [seoTitle, setSeoTitle] = useState(initialData?.seo_title || '');
   const [seoDescription, setSeoDescription] = useState(initialData?.seo_description || '');
@@ -150,6 +151,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
         image_urls: finalImageUrls,
         external_link: externalLink,
         is_out_of_stock: isOutOfStock,
+        is_active: isActive,
         is_promo_active: isPromoActive,
         discount_type: discountType,
         discount_amount: discountAmount,
@@ -297,6 +299,27 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
               </div>
               <div className="ml-3 text-sm font-medium text-text-main">
                 {isOutOfStock ? 'Esgotado' : 'Em Estoque'}
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-support mb-2">Visibilidade</label>
+          <div className="flex items-center h-10">
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
+                <div className={`block w-14 h-8 rounded-full transition-colors ${isActive ? 'bg-primary' : 'bg-background-tertiary'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isActive ? 'transform translate-x-6' : ''}`}></div>
+              </div>
+              <div className="ml-3 text-sm font-medium text-text-main">
+                {isActive ? 'Ativo no Catálogo' : 'Inativo / Oculto'}
               </div>
             </label>
           </div>

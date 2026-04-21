@@ -65,10 +65,28 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
     product = pData;
     productError = pError;
 
+    if (product && product.is_active === false) {
+      return (
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <main className="flex-grow flex items-center justify-center p-8">
+            <div className="text-center max-w-md">
+              <h1 className="text-3xl font-bold text-text-main mb-4">Produto Temporariamente Indisponível</h1>
+              <p className="text-text-support mb-8">Desculpe, este produto foi desativado e não está mais visivel no catálogo no momento.</p>
+              <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-primary-hover text-background-main font-bold rounded-xl transition-all shadow-lg shadow-primary/20">
+                Voltar ao Catálogo
+              </Link>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
     if (!pError && pData) {
       const { data: aData } = await supabase
         .from('products')
         .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
       allProducts = aData || [];
     }
