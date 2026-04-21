@@ -111,10 +111,10 @@ export async function getProductBySku(sku: string): Promise<Product | null> {
   }
 }
 
-export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
+export async function getProductsByCategorySlug(slug: string): Promise<Product[]> {
   try {
     const categories = await getCategories();
-    const category = categories.find(c => c.slug === categorySlug);
+    const category = categories.find(c => c.slug === slug);
     
     if (!category) return [];
 
@@ -137,6 +137,9 @@ export async function getProductsByCategory(categorySlug: string): Promise<Produ
     return [];
   }
 }
+
+// Keep the old name as alias for backward compatibility or refactor the single usage
+export const getProductsByCategory = getProductsByCategorySlug;
 
 export async function getCategories(): Promise<Category[]> {
   try {

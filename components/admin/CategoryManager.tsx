@@ -22,13 +22,25 @@ export default function CategoryManager({ initialCategories }: { initialCategori
     e.preventDefault();
     if (!newCategory.trim()) return;
 
+    const createSlug = (str: string) => {
+      return str
+        .toLowerCase()
+        .normalize('NFD') // Decompose combined graphemes into the combination of simple ones
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents/diacritics
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/[^a-z0-9-]/g, ''); // Remove all non-word characters
+    };
+
     setIsAdding(true);
     try {
       const supabase = createClient();
       
       const { data, error } = await supabase
         .from('categories')
-        .insert([{ name: newCategory.trim() }])
+        .insert([{ 
+          name: newCategory.trim(),
+          slug: createSlug(newCategory)
+        }])
         .select()
         .single();
 
