@@ -6,6 +6,7 @@ import { Wand2, Save, ArrowLeft, Upload, Link as LinkIcon, Trash2 } from 'lucide
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 export default function ProductForm({ initialData, categories = [] }: { initialData?: any, categories?: any[] }) {
   const router = useRouter();
@@ -182,6 +183,15 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
       }
       
       toast.success('Produto salvo com sucesso!');
+      
+      trackEvent('save_product', {
+        product_id: initialData?.id || 'new',
+        product_name: name,
+        category: category,
+        is_promo: isPromoActive,
+        is_active: isActive
+      });
+
       router.push('/admin/products');
       router.refresh();
     } catch (error: any) {

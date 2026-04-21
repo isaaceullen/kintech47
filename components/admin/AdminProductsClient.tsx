@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { Plus, Edit, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Trash2, CheckCircle2, Power, PowerOff } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Edit, ArrowUpDown, ChevronUp, ChevronDown, MoreVertical, Power, PowerOff } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import DeleteProductButton from '@/components/admin/DeleteProductButton';
 import MarkAsSoldButton from '@/components/admin/MarkAsSoldButton';
 import StockToggle from '@/components/admin/StockToggle';
 import { Product } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
+import { trackEvent } from '@/components/GoogleAnalytics';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,7 @@ type AdminProductsClientProps = {
 };
 
 export default function AdminProductsClient({ initialProducts, initialDefaultSort }: AdminProductsClientProps) {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [defaultSort, setDefaultSort] = useState(initialDefaultSort);
@@ -137,6 +140,11 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
       
       setProducts(products.map(p => p.id === product.id ? { ...p, is_active: newStatus } : p));
       toast.success(newStatus ? 'Produto ativado!' : 'Produto desativado!');
+      trackEvent('toggle_product_status', { 
+        product_id: product.id, 
+        product_name: product.name, 
+        new_status: newStatus ? 'active' : 'inactive' 
+      });
     } catch (error) {
       console.error('Error toggling status:', error);
       toast.error('Erro ao alterar status do produto.');
@@ -276,11 +284,12 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                           <MoreVertical className="w-5 h-5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 bg-background-secondary border-background-tertiary text-text-main">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/products/${product.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-                              <Edit className="w-4 h-4" />
-                              Editar Produto
-                            </Link>
+                          <DropdownMenuItem 
+                            onClick={() => router.push(`/admin/products/${product.id}/edit`)}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar Produto
                           </DropdownMenuItem>
                           
                           <DropdownMenuSeparator className="bg-background-tertiary" />
@@ -303,7 +312,7 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                             )}
                           </DropdownMenuItem>
 
-                          <DropdownMenuItem asChild className="focus:bg-transparent p-0">
+                          <DropdownMenuItem className="focus:bg-transparent p-0">
                             <div className="w-full">
                                <MarkAsSoldButton product={product} variant="menuItem" />
                             </div>
@@ -311,7 +320,7 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
 
                           <DropdownMenuSeparator className="bg-background-tertiary" />
                           
-                          <DropdownMenuItem asChild className="focus:bg-transparent p-0">
+                          <DropdownMenuItem className="focus:bg-transparent p-0">
                             <div className="w-full">
                               <DeleteProductButton productId={product.id} imageUrls={product.image_urls || []} variant="menuItem" />
                             </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DollarSign, Loader2, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
+import { trackEvent } from '@/components/GoogleAnalytics';
 import { Product } from '@/types/database';
 
 type MarkAsSoldButtonProps = {
@@ -51,6 +52,15 @@ export default function MarkAsSoldButton({ product, variant = 'default' }: MarkA
       if (error) throw error;
 
       toast.success('Venda registrada com sucesso!');
+      
+      trackEvent('mark_as_sold', {
+        product_id: product.id,
+        product_name: product.name,
+        payment_method: paymentMethod,
+        sale_price: finalPrice,
+        profit: profit
+      });
+
       setIsOpen(false);
       router.refresh();
     } catch (error: any) {
