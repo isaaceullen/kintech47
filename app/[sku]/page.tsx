@@ -133,6 +133,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
           <ProductGallery 
             images={product.image_urls || []} 
+            videoUrls={product.video_urls || []}
             sku={product.sku} 
             name={product.name} 
             isOutOfStock={product.is_out_of_stock}

@@ -40,6 +40,17 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
     }
     return safeImages;
   });
+
+  const [videoUrls, setVideoUrls] = useState<string[]>(() => {
+    let safeVideos = ['', ''];
+    if (initialData?.video_urls && Array.isArray(initialData.video_urls)) {
+      safeVideos = [
+        initialData.video_urls[0] || '',
+        initialData.video_urls[1] || ''
+      ];
+    }
+    return safeVideos;
+  });
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const profit = pixPrice - costPrice;
@@ -98,7 +109,19 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
     setImageUrls(newImageUrls);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleVideoRemove = (index: number) => {
+    const newVideoUrls = [...videoUrls];
+    newVideoUrls[index] = '';
+    setVideoUrls(newVideoUrls);
+  };
+
+  const handleVideoUrlChange = (value: string, index: number) => {
+    const newVideoUrls = [...videoUrls];
+    newVideoUrls[index] = value;
+    setVideoUrls(newVideoUrls);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number, isVideo: boolean = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -121,12 +144,18 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
         .from('product-images')
         .getPublicUrl(filePath);
 
-      const newImageUrls = [...imageUrls];
-      newImageUrls[index] = publicUrl;
-      setImageUrls(newImageUrls);
+      if (isVideo) {
+        const newVideoUrls = [...videoUrls];
+        newVideoUrls[index] = publicUrl;
+        setVideoUrls(newVideoUrls);
+      } else {
+        const newImageUrls = [...imageUrls];
+        newImageUrls[index] = publicUrl;
+        setImageUrls(newImageUrls);
+      }
     } catch (error: any) {
-      console.error('Error uploading image:', error);
-      alert(`Erro ao fazer upload da imagem: ${error.message || 'Verifique se o bucket "product-images" existe e é público.'}`);
+      console.error('Error uploading file:', error);
+      alert(`Erro ao fazer upload: ${error.message || 'Verifique se o bucket "product-images" existe e é público.'}`);
     }
   };
 
@@ -139,6 +168,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
       const supabase = createClient();
       
       const finalImageUrls = imageUrls?.filter(url => url && typeof url === 'string' && url.trim() !== '') || [];
+      const finalVideoUrls = videoUrls?.filter(url => url && typeof url === 'string' && url.trim() !== '') || [];
 
       const productData = {
         sku,
@@ -149,6 +179,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
         pix_price: pixPrice,
         card_price: cardPrice,
         image_urls: finalImageUrls,
+        video_urls: finalVideoUrls,
         external_link: externalLink,
         is_out_of_stock: isOutOfStock,
         is_active: isActive,
@@ -521,7 +552,46 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
                       type="file" 
                       accept="image/*" 
                       className="hidden" 
-                      onChange={(e) => handleFileUpload(e, index)}
+                      onChange={(e) => handleFileUpload(e, index, false)}
+                    />
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <label className="block text-sm font-medium text-text-support mt-8 mb-4">Vídeos do Produto - Opcional (Máx. 2)</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            {[0, 1].map((index) => (
+              <div key={`video-${index}`} className="flex flex-col gap-3 p-4 border border-background-tertiary rounded-xl bg-background-main">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-text-main">Vídeo {index + 1}</span>
+                  {videoUrls[index] && (
+                    <button
+                      type="button"
+                      onClick={() => handleVideoRemove(index)}
+                      className="text-xs text-danger hover:underline flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> Remover
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 mt-1">
+                  <input 
+                    type="url" 
+                    placeholder="YouTube, Vimeo, ou link MP4..."
+                    value={videoUrls[index]}
+                    onChange={(e) => handleVideoUrlChange(e.target.value, index)}
+                    className="flex-grow px-3 py-2 text-sm bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+                  />
+                  <label className="cursor-pointer flex items-center justify-center px-3 py-2 bg-background-tertiary hover:bg-primary/20 text-primary rounded-lg transition-colors" title="Fazer Upload">
+                    <Upload className="w-4 h-4" />
+                    <input 
+                      type="file" 
+                      accept="video/*" 
+                      className="hidden" 
+                      onChange={(e) => handleFileUpload(e, index, true)}
                     />
                   </label>
                 </div>

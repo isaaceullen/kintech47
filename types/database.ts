@@ -9,6 +9,7 @@ export type Product = {
   pix_price: number;
   card_price: number;
   image_urls: string[];
+  video_urls?: string[];
   external_link?: string;
   is_out_of_stock: boolean;
   is_active: boolean;
