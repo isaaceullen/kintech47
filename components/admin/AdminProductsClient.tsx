@@ -336,7 +336,8 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                             <MarkAsSoldButton 
                               product={product} 
                               triggerMode="menuItem" 
-                              onOpenModal={() => setOpenMenuId(null)}
+                              onOpenModal={() => {}}
+                              onCloseModal={() => setOpenMenuId(null)}
                               onSuccess={() => handleStockUpdate(product.id, true)}
                             />
                             
@@ -379,7 +380,8 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                               productId={product.id} 
                               imageUrls={product.image_urls || []} 
                               triggerMode="menuItem"
-                              onOpenModal={() => setOpenMenuId(null)}
+                              onOpenModal={() => {}}
+                              onCloseModal={() => setOpenMenuId(null)}
                               onSuccess={() => {
                                 setProducts(products.filter(p => p.id !== product.id));
                               }}

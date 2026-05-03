@@ -11,7 +11,7 @@ type MarkAsSoldButtonProps = {
   product: Product;
 };
 
-export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpenModal, onSuccess }: MarkAsSoldButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onSuccess?: () => void }) {
+export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpenModal, onCloseModal, onSuccess }: MarkAsSoldButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onCloseModal?: () => void, onSuccess?: () => void }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +66,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
 
       toast.success('Venda registrada com sucesso!');
       setIsOpen(false);
+      onCloseModal?.();
       
       if (onSuccess) {
         onSuccess();
@@ -84,7 +85,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
     <>
       {triggerMode === 'icon' ? (
         <button 
-          onClick={() => { setIsOpen(true); onOpenModal?.(); }}
+          onClick={(e) => { e.stopPropagation(); setIsOpen(true); onOpenModal?.(); }}
           className="p-2 text-text-support hover:text-success transition-colors"
           title="Marcar como Vendido"
         >
@@ -92,7 +93,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
         </button>
       ) : (
         <button 
-          onClick={() => { setIsOpen(true); onOpenModal?.(); }}
+          onClick={(e) => { e.stopPropagation(); setIsOpen(true); onOpenModal?.(); }}
           className="w-full text-left px-4 py-2 text-sm text-text-main hover:bg-background-tertiary transition-colors flex items-center gap-2"
         >
           <DollarSign className="w-4 h-4" />
@@ -101,7 +102,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
           <div className="bg-background-secondary rounded-xl border border-background-tertiary w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl">
             <div className="p-6">
               <h3 className="text-xl font-bold text-text-main mb-4">Registrar Venda</h3>
@@ -153,7 +154,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
 
             <div className="p-4 border-t border-background-tertiary flex justify-end gap-3 bg-background-main/50">
               <button 
-                onClick={() => setIsOpen(false)}
+                onClick={() => { setIsOpen(false); onCloseModal?.(); }}
                 disabled={isSubmitting}
                 className="px-4 py-2 text-text-support hover:text-text-main font-medium transition-colors"
               >

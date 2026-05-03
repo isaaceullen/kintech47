@@ -11,7 +11,7 @@ interface DeleteProductButtonProps {
   imageUrls: string[];
 }
 
-export default function DeleteProductButton({ productId, imageUrls, triggerMode = 'icon', onOpenModal, onSuccess }: DeleteProductButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onSuccess?: () => void }) {
+export default function DeleteProductButton({ productId, imageUrls, triggerMode = 'icon', onOpenModal, onCloseModal, onSuccess }: DeleteProductButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onCloseModal?: () => void, onSuccess?: () => void }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
@@ -54,6 +54,7 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
 
       toast.success('Produto excluído com sucesso!');
       setShowConfirm(false);
+      onCloseModal?.();
       
       if (onSuccess) {
         onSuccess();
@@ -72,7 +73,7 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
     <>
       {triggerMode === 'icon' ? (
         <button 
-          onClick={() => { setShowConfirm(true); onOpenModal?.(); }}
+          onClick={(e) => { e.stopPropagation(); setShowConfirm(true); onOpenModal?.(); }}
           className="p-2 text-text-support hover:text-danger transition-colors"
           title="Excluir produto"
         >
@@ -80,7 +81,7 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
         </button>
       ) : (
         <button 
-          onClick={() => { setShowConfirm(true); onOpenModal?.(); }}
+          onClick={(e) => { e.stopPropagation(); setShowConfirm(true); onOpenModal?.(); }}
           className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-background-tertiary transition-colors flex items-center gap-2"
         >
           <Trash2 className="w-4 h-4" />
@@ -89,7 +90,7 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
       )}
 
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-background-secondary border border-background-tertiary rounded-xl p-6 max-w-md w-full shadow-2xl">
             <h3 className="text-xl font-bold text-text-main mb-2">Confirmar Exclusão</h3>
             <p className="text-text-support mb-6">
@@ -97,7 +98,7 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
             </p>
             <div className="flex justify-end gap-3">
               <button 
-                onClick={() => setShowConfirm(false)}
+                onClick={() => { setShowConfirm(false); onCloseModal?.(); }}
                 disabled={isDeleting}
                 className="px-4 py-2 rounded-lg text-text-main hover:bg-background-tertiary transition-colors"
               >
