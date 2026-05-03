@@ -11,13 +11,14 @@ type MarkAsSoldButtonProps = {
   product: Product;
 };
 
-export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpenModal }: MarkAsSoldButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void }) {
+export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpenModal, onSuccess }: MarkAsSoldButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onSuccess?: () => void }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'Cartão'>('PIX');
   const [salePrice, setSalePrice] = useState<string>(product.pix_price.toString());
+  const [costPrice, setCostPrice] = useState<string>(product.cost_price.toString());
 
   const handlePaymentMethodChange = (method: 'PIX' | 'Cartão') => {
     setPaymentMethod(method);
@@ -26,32 +27,51 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
 
   const handleConfirm = async () => {
     const finalPrice = parseFloat(salePrice);
+    const finalCost = parseFloat(costPrice);
     if (isNaN(finalPrice) || finalPrice < 0) {
       toast.error('Valor de venda inválido');
+      return;
+    }
+    if (isNaN(finalCost) || finalCost < 0) {
+      toast.error('Custo do produto inválido');
       return;
     }
 
     setIsSubmitting(true);
     try {
       const supabase = createClient();
-      const profit = finalPrice - product.cost_price;
+      const profit = finalPrice - finalCost;
 
-      const { error } = await supabase
+      // 1. Register Sale
+      const { error: saleError } = await supabase
         .from('sales')
         .insert([{
           product_id: product.id,
           product_name: product.name,
-          cost_price: product.cost_price,
+          cost_price: finalCost,
           sale_price: finalPrice,
           payment_method: paymentMethod,
           profit: profit
         }]);
 
-      if (error) throw error;
+      if (saleError) throw saleError;
+
+      // 2. Update Product to out_of_stock
+      const { error: productError } = await supabase
+        .from('products')
+        .update({ is_out_of_stock: true })
+        .eq('id', product.id);
+
+      if (productError) throw productError;
 
       toast.success('Venda registrada com sucesso!');
       setIsOpen(false);
-      router.refresh();
+      
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.refresh();
+      }
     } catch (error: any) {
       console.error('Error recording sale:', error);
       toast.error('Erro ao registrar venda: ' + error.message);
@@ -81,8 +101,8 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-main/80 backdrop-blur-sm">
-          <div className="bg-background-secondary rounded-xl border border-background-tertiary w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-background-secondary rounded-xl border border-background-tertiary w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl">
             <div className="p-6">
               <h3 className="text-xl font-bold text-text-main mb-4">Registrar Venda</h3>
               
@@ -98,12 +118,12 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-support mb-1">Custo</label>
+                  <label className="block text-sm font-medium text-text-support mb-1">Custo do Produto (R$)</label>
                   <input 
-                    type="text" 
-                    value={`R$ ${product.cost_price.toFixed(2)}`} 
-                    readOnly 
-                    className="w-full px-3 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-support cursor-not-allowed"
+                    type="number" 
+                    value={costPrice} 
+                    onChange={(e) => setCostPrice(e.target.value)}
+                    className="w-full px-3 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
                   />
                 </div>
 
@@ -142,7 +162,7 @@ export default function MarkAsSoldButton({ product, triggerMode = 'icon', onOpen
               <button 
                 onClick={handleConfirm}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 bg-success hover:bg-success/80 text-white rounded-lg font-medium transition-colors disabled:opacity-70"
+                className="flex items-center gap-2 px-4 py-2 bg-success hover:bg-green-600 text-white rounded-lg font-medium transition-colors disabled:opacity-70"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
                 Confirmar Venda

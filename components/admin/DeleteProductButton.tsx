@@ -11,7 +11,7 @@ interface DeleteProductButtonProps {
   imageUrls: string[];
 }
 
-export default function DeleteProductButton({ productId, imageUrls, triggerMode = 'icon', onOpenModal }: DeleteProductButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void }) {
+export default function DeleteProductButton({ productId, imageUrls, triggerMode = 'icon', onOpenModal, onSuccess }: DeleteProductButtonProps & { triggerMode?: 'icon' | 'menuItem', onOpenModal?: () => void, onSuccess?: () => void }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
@@ -54,7 +54,12 @@ export default function DeleteProductButton({ productId, imageUrls, triggerMode 
 
       toast.success('Produto excluído com sucesso!');
       setShowConfirm(false);
-      router.refresh();
+      
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.refresh();
+      }
     } catch (error: any) {
       console.error('Error deleting product:', error);
       toast.error(`Erro ao excluir produto: ${error.message}`);

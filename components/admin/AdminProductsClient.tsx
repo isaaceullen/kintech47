@@ -336,7 +336,8 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                             <MarkAsSoldButton 
                               product={product} 
                               triggerMode="menuItem" 
-                              onOpenModal={() => setOpenMenuId(null)} 
+                              onOpenModal={() => setOpenMenuId(null)}
+                              onSuccess={() => handleStockUpdate(product.id, true)}
                             />
                             
                             <button
@@ -379,6 +380,9 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
                               imageUrls={product.image_urls || []} 
                               triggerMode="menuItem"
                               onOpenModal={() => setOpenMenuId(null)}
+                              onSuccess={() => {
+                                setProducts(products.filter(p => p.id !== product.id));
+                              }}
                             />
                           </div>
                         )}
