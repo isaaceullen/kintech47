@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   
   // Clear dummy auth cookie
   response.cookies.delete('sb-dummy-auth')
+  response.cookies.delete('kintech_dev_auth')
 
   return response
 }

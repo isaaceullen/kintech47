@@ -75,13 +75,30 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
     setMinPrice('');
     setMaxPrice('');
     setSortBy(initialSort);
+    // If we're on a category page, reset URL
+    if (window.location.pathname.startsWith('/categoria/')) {
+      window.location.href = '/';
+    }
   };
 
   // Apply filters
   let filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           p.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    
+    let matchesCategory = false;
+    if (selectedCategory === 'all') {
+      matchesCategory = true;
+    } else {
+      matchesCategory = p.category === selectedCategory;
+      if (!matchesCategory) {
+        const cat = categories.find(c => c.name === selectedCategory);
+        if (cat) {
+          const subcatsNames = categories.filter(c => c.parent_id === cat.id).map(c => c.name);
+          matchesCategory = subcatsNames.includes(p.category);
+        }
+      }
+    }
     
     const price = p.pix_price;
     const matchesMinPrice = minPrice === '' || price >= parseFloat(minPrice);
@@ -114,20 +131,42 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
         <div className="space-y-2">
           <Link
             href="/"
-            onClick={() => isMobile && setIsMobileFiltersOpen(false)}
+            onClick={() => {
+              if (isMobile) setIsMobileFiltersOpen(false);
+            }}
             className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === 'all' ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
           >
             Todas as Categorias
           </Link>
-          {categories.map(cat => (
-            <Link
-              key={cat.id}
-              href={`/categoria/${cat.slug}`}
-              onClick={() => isMobile && setIsMobileFiltersOpen(false)}
-              className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat.name ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
-            >
-              {cat.name}
-            </Link>
+          {categories.filter(cat => !cat.parent_id).map(cat => (
+            <div key={cat.id}>
+              <Link
+                href={`/categoria/${cat.slug}`}
+                onClick={() => {
+                  if (isMobile) setIsMobileFiltersOpen(false);
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-lg transition-colors ${selectedCategory === cat.name ? 'bg-accent text-background-main font-bold' : 'text-text-support hover:bg-background-tertiary hover:text-text-main'}`}
+              >
+                {cat.name}
+              </Link>
+              {/* Subcategories */}
+              {categories.filter(subcat => subcat.parent_id === cat.id).length > 0 && (
+                <div className="ml-4 pl-2 border-l border-background-tertiary space-y-1 mt-1">
+                  {categories.filter(subcat => subcat.parent_id === cat.id).map(subcat => (
+                    <Link
+                      key={subcat.id}
+                      href={`/categoria/${cat.slug}/${subcat.slug}`}
+                      onClick={() => {
+                        if (isMobile) setIsMobileFiltersOpen(false);
+                      }}
+                      className={`block w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedCategory === subcat.name ? 'bg-background-tertiary text-primary font-medium' : 'text-text-support hover:text-text-main hover:bg-background-main/50'}`}
+                    >
+                      {subcat.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -204,7 +243,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
         <div className="sticky top-24 bg-background-secondary p-6 rounded-xl border border-background-tertiary">
           {renderFilters(false)}
           <button 
-            onClick={clearFilters}
+            onClick={() => clearFilters()}
             className="w-full mt-8 py-2 border border-background-tertiary text-text-main rounded-lg font-medium hover:bg-background-tertiary transition-colors"
           >
             Limpar Filtros
@@ -278,7 +317,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
                 <h3 className="text-xl font-bold text-text-main mb-2">Nenhum produto encontrado</h3>
                 <p className="text-text-support mb-6">Não encontramos nenhum produto com esses filtros.</p>
                 <button 
-                  onClick={clearFilters}
+                  onClick={() => clearFilters()}
                   className="px-6 py-2 bg-accent hover:bg-accent-hover text-background-main font-bold rounded-lg transition-colors"
                 >
                   Limpar Filtros

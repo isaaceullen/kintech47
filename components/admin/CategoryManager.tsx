@@ -9,11 +9,13 @@ import toast from 'react-hot-toast';
 interface Category {
   id: string;
   name: string;
+  parent_id?: string | null;
 }
 
 export default function CategoryManager({ initialCategories }: { initialCategories: Category[] }) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [newCategory, setNewCategory] = useState('');
+  const [parentId, setParentId] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
@@ -39,7 +41,8 @@ export default function CategoryManager({ initialCategories }: { initialCategori
         .from('categories')
         .insert([{ 
           name: newCategory.trim(),
-          slug: createSlug(newCategory)
+          slug: createSlug(newCategory),
+          parent_id: parentId || null
         }])
         .select()
         .single();
@@ -48,6 +51,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
 
       setCategories([...categories, data]);
       setNewCategory('');
+      setParentId('');
       toast.success('Categoria adicionada com sucesso!');
       router.refresh();
     } catch (error: any) {
@@ -59,7 +63,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
+    if (!window.confirm('Tem certeza que deseja excluir esta categoria? As subcategorias também serão excluídas.')) return;
 
     setDeletingId(id);
     try {
@@ -72,7 +76,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
 
       if (error) throw error;
 
-      setCategories(categories.filter(c => c.id !== id));
+      setCategories(categories.filter(c => c.id !== id && c.parent_id !== id));
       toast.success('Categoria excluída com sucesso!');
       router.refresh();
     } catch (error: any) {
@@ -83,9 +87,11 @@ export default function CategoryManager({ initialCategories }: { initialCategori
     }
   };
 
+  const parentCategories = categories.filter(c => !c.parent_id);
+
   return (
-    <div className="bg-background-secondary rounded-xl border border-background-tertiary p-6 max-w-2xl">
-      <form onSubmit={handleAdd} className="flex gap-4 mb-8">
+    <div className="bg-background-secondary rounded-xl border border-background-tertiary p-6 max-w-3xl">
+      <form onSubmit={handleAdd} className="flex gap-4 mb-8 flex-col md:flex-row">
         <input
           type="text"
           value={newCategory}
@@ -94,10 +100,20 @@ export default function CategoryManager({ initialCategories }: { initialCategori
           className="flex-grow px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
           required
         />
+        <select
+          value={parentId}
+          onChange={(e) => setParentId(e.target.value)}
+          className="px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary"
+        >
+          <option value="">Nenhuma (Categoria Principal)</option>
+          {parentCategories.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
         <button
           type="submit"
           disabled={isAdding}
-          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-background-main font-medium py-2 px-6 rounded-lg transition-colors"
+          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-background-main font-medium py-2 px-6 rounded-lg transition-colors"
         >
           {isAdding ? (
             <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-background-main"></div>
@@ -115,6 +131,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
           <thead>
             <tr className="border-b border-background-tertiary bg-background-main/50">
               <th className="p-4 text-sm font-medium text-text-support">Nome da Categoria</th>
+              <th className="p-4 text-sm font-medium text-text-support">Categoria Pai</th>
               <th className="p-4 text-sm font-medium text-text-support text-right">Ações</th>
             </tr>
           </thead>
@@ -122,6 +139,9 @@ export default function CategoryManager({ initialCategories }: { initialCategori
             {categories.map((category) => (
               <tr key={category.id} className="border-b border-background-tertiary hover:bg-background-main/50 transition-colors">
                 <td className="p-4 text-text-main font-medium">{category.name}</td>
+                <td className="p-4 text-text-support text-sm">
+                  {category.parent_id ? categories.find(c => c.id === category.parent_id)?.name || '-' : '-'}
+                </td>
                 <td className="p-4 text-right">
                   <button
                     onClick={() => handleDelete(category.id)}

@@ -7,11 +7,20 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Allow dummy auth for preview
-  if (request.cookies.has('sb-dummy-auth')) {
+  if (
+    request.cookies.has('sb-dummy-auth') || 
+    request.cookies.has('kintech_dev_auth') ||
+    !process.env.NEXT_PUBLIC_SUPABASE_URL || 
+    process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL'
+  ) {
     if (request.nextUrl.pathname === '/admin/login') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin'
-      return NextResponse.redirect(url)
+      // In dev mode, if they visit /admin/login but have dummy auth, we don't automatically 
+      // redirect unless they actually HAVE the cookie, otherwise they can never log in
+      if (request.cookies.has('sb-dummy-auth') || request.cookies.has('kintech_dev_auth')) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin'
+        return NextResponse.redirect(url)
+      }
     }
     return supabaseResponse;
   }

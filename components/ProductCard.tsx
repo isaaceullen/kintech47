@@ -98,18 +98,27 @@ export default function ProductCard({ product }: { product: Product }) {
             </span>
           </div>
           
-          <button
-            onClick={handleAddToCart}
-            disabled={product.is_out_of_stock}
-            className={`mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-colors ${
-              product.is_out_of_stock 
-                ? 'bg-background-tertiary text-text-support cursor-not-allowed' 
-                : 'bg-primary hover:bg-primary-hover text-background-main'
-            }`}
-          >
-            <ShoppingCart className="w-5 h-5" />
-            Adicionar
-          </button>
+          {product.is_out_of_stock ? (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(`https://wa.me/5547988692150?text=${encodeURIComponent(`Olá! Me avise quando o produto ${product.name} voltar ao estoque.`)}`, '_blank');
+              }}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-colors bg-accent hover:bg-accent/80 text-background-main cursor-pointer"
+            >
+              <ShoppingCart className="w-5 h-5 hidden" /> {/* Hidden but keeps alignment if needed, let's use WhatsApp icon or just text */}
+              Avise-me
+            </button>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-colors bg-primary hover:bg-primary-hover text-background-main"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Adicionar
+            </button>
+          )}
         </div>
       </div>
     </Link>

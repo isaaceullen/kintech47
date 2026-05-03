@@ -118,15 +118,22 @@ export async function getProductsByCategorySlug(slug: string): Promise<Product[]
     
     if (!category) return [];
 
+    // Find all subcategories to include their products
+    const subcategoryNames = categories
+      .filter(c => c.parent_id === category.id)
+      .map(c => c.name);
+    
+    const categoryNamesToFetch = [category.name, ...subcategoryNames];
+
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-      return MOCK_PRODUCTS.filter(p => p.category === category.name && p.is_active !== false);
+      return MOCK_PRODUCTS.filter(p => categoryNamesToFetch.includes(p.category) && p.is_active !== false);
     }
 
     const supabase = createClient();
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('category', category.name)
+      .in('category', categoryNamesToFetch)
       .or('is_active.eq.true,is_active.is.null')
       .order('created_at', { ascending: false });
 

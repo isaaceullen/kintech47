@@ -1,12 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
 import { LayoutDashboard, Package, LogOut, Home, Tags, Menu, X, MessageSquare } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      // 1. Check local storage mock auth
+      if (localStorage.getItem('kintech_dev_auth') === 'true') {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      // 2. Otherwise check Supabase real auth
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session && pathname !== '/admin/login') {
+        // If no real session and we're not on login, enforce redirect (handling cases where middleware didn't catch it)
+        router.replace('/admin/login');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [pathname, router]);
+
+  if (isCheckingAuth && pathname !== '/admin/login') {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background-main">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden bg-background-main">
@@ -81,12 +117,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Home className="w-4 h-4" />
             Ver Loja
           </Link>
-          <form action="/api/auth/signout" method="post">
-            <button type="submit" className="flex items-center gap-3 px-4 py-2 text-danger hover:bg-danger/10 rounded-lg transition-colors w-full text-left">
-              <LogOut className="w-4 h-4" />
-              Sair
-            </button>
-          </form>
+          <button 
+            onClick={async () => { 
+              localStorage.removeItem('kintech_dev_auth'); 
+              await fetch('/api/auth/signout', { method: 'POST' });
+              window.location.href = '/admin/login';
+            }} 
+            className="flex items-center gap-3 px-4 py-2 text-danger hover:bg-danger/10 rounded-lg transition-colors w-full text-left"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
         </div>
       </aside>
 

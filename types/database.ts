@@ -42,6 +42,7 @@ export type Category = {
   created_at: string;
   name: string;
   slug: string;
+  parent_id?: string | null;
 };
 
 export type Sale = {

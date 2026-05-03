@@ -207,7 +207,7 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
 
       if (error) {
         console.error('Detalhes do erro do Supabase ao salvar produto:', error);
-        setSubmitError(`Erro do banco: ${error.message || JSON.stringify(error)}`);
+        setSubmitError(`Erro do banco: ${error.message || String(error)}`);
         toast.error('Erro ao salvar produto!');
         return;
       }
@@ -273,7 +273,16 @@ export default function ProductForm({ initialData, categories = [] }: { initialD
             className="w-full px-4 py-2 bg-background-main border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:border-primary appearance-none"
           >
             <option value="" disabled>Selecione uma categoria</option>
-            {categories.map((cat) => (
+            {categories.filter(c => !c.parent_id).map((cat) => (
+              <optgroup key={cat.id} label={cat.name}>
+                <option value={cat.name}>{cat.name} (Principal)</option>
+                {categories.filter(sub => sub.parent_id === cat.id).map(sub => (
+                  <option key={sub.id} value={sub.name}>-- {sub.name}</option>
+                ))}
+              </optgroup>
+            ))}
+            {/* Fallback for any categories that might not fit the structure cleanly if any data inconsistencies arise */}
+            {categories.filter(c => c.parent_id && !categories.some(p => p.id === c.parent_id)).map(cat => (
               <option key={cat.id} value={cat.name}>{cat.name}</option>
             ))}
           </select>
