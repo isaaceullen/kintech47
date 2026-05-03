@@ -9,7 +9,26 @@ import AddToCartButton from '@/components/AddToCartButton';
 import ProductCard from '@/components/ProductCard';
 import ProductGallery from '@/components/ProductGallery';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('products')
+      .select('sku')
+      .eq('is_active', true);
+      
+    if (!data) return [];
+    
+    return data.map((product) => ({
+      sku: product.sku,
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    return [];
+  }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ sku: string }> }): Promise<Metadata> {
   const { sku } = await params;
@@ -50,7 +69,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sku: stri
 export default async function ProductPage({ params }: { params: Promise<{ sku: string }> }) {
   const { sku } = await params;
   let product = null;
-  let allProducts = [];
+  let relatedProducts = [];
   let productError = null;
 
   try {
@@ -66,27 +85,30 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
     productError = pError;
 
     if (!pError && pData) {
-      const { data: aData } = await supabase
+      const { data: rData } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
-      allProducts = aData || [];
+        .eq('category', pData.category)
+        .neq('id', pData.id)
+        .or('is_active.eq.true,is_active.is.null')
+        .order('created_at', { ascending: false })
+        .limit(6);
+      relatedProducts = rData || [];
     }
   } catch (err) {
     console.error('Supabase fetch error:', err);
     // Fallback to mock data if Supabase fails
-    const { getProductBySku, getProducts } = await import('@/lib/api');
+    const { getProductBySku, getProductsByCategorySlug } = await import('@/lib/api');
     product = await getProductBySku(sku);
-    allProducts = await getProducts();
+    if (product) {
+      const allRelated = await getProductsByCategorySlug(product.category);
+      relatedProducts = allRelated.filter(p => p.id !== product?.id).slice(0, 6);
+    }
   }
 
   if (productError || !product) {
     notFound();
   }
-
-  const relatedProducts = (allProducts || [])
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -223,7 +245,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
         {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-text-main mb-6 border-b border-background-tertiary pb-4">Produtos Relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3">
               {relatedProducts.map(p => (
                 <ProductCard key={p.id} product={p} />
               ))}
