@@ -124,7 +124,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Navbar />
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <main className="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <Link href="/" className="inline-flex items-center text-text-support hover:text-primary mb-6 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Voltar para o catálogo
@@ -223,7 +223,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
         {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-text-main mb-6 border-b border-background-tertiary pb-4">Produtos Relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4 xl:gap-6">
               {relatedProducts.map(p => (
                 <ProductCard key={p.id} product={p} />
               ))}

@@ -73,7 +73,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <main className="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div className="flex items-center mb-8">
           <Link href="/" className="inline-flex items-center text-text-support hover:text-primary transition-colors mr-4">
             <ArrowLeft className="w-5 h-5" />
