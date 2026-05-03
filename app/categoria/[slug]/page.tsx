@@ -55,7 +55,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   return (
     <>
       <Navbar />
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
+      <main className="container mx-auto px-2 sm:px-4 lg:px-6 py-6 max-w-[1400px]">
         <div className="mb-8 border-b border-background-tertiary pb-4">
           <h1 className="text-3xl font-bold text-text-main">
             Produtos em: <span className="text-primary">{category.name}</span>
