@@ -2,11 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { DollarSign, TrendingUp, Package, TrendingDown, Edit, Trash2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import { Sale } from '@/types/database';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const RechartsClient = dynamic(() => import('./RechartsClient'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full text-text-support">Carregando gráfico...</div>
+});
 
 type DashboardClientProps = {
   initialSales: Sale[];
@@ -39,7 +44,7 @@ export default function DashboardClient({ initialSales, productsInStock }: Dashb
   // Let's group by Date (last 7 days or just show recent sales)
   // For a simple bar chart, let's show the last 10 sales
   const chartData = sales.slice(0, 10).reverse().map(sale => ({
-    name: sale.product_name.substring(0, 15) + '...',
+    name: (sale.product_name || 'Produto').substring(0, 15) + '...',
     'Custo Total': sale.cost_price,
     'Faturamento Total': sale.sale_price,
   }));
@@ -150,29 +155,7 @@ export default function DashboardClient({ initialSales, productsInStock }: Dashb
       <div className="bg-background-secondary p-6 rounded-xl border border-background-tertiary mb-10">
         <h2 className="text-xl font-bold text-text-main mb-6">Comparativo: Custo vs Faturamento (Últimas Vendas)</h2>
         <div className="h-80 w-full">
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A3441" />
-                <XAxis dataKey="name" stroke="#8B9BB4" tick={{fill: '#8B9BB4'}} />
-                <YAxis stroke="#8B9BB4" tick={{fill: '#8B9BB4'}} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#0B132B', borderColor: '#2A3441', color: '#F8FAFC' }}
-                  itemStyle={{ color: '#F8FAFC' }}
-                />
-                <Legend />
-                <Bar dataKey="Custo Total" fill="#8B9BB4" />
-                <Bar dataKey="Faturamento Total" fill="#C5A059" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-text-support">
-              Nenhum dado de venda disponível para o gráfico.
-            </div>
-          )}
+          <RechartsClient data={chartData} />
         </div>
       </div>
       
