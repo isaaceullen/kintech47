@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MetaPixel from '@/components/MetaPixel';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import PopupModal from '@/components/PopupModal';
 import './globals.css';
 
 // 1. Metadados para o Next.js (Mantenha para SEO interno)
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         {children}
         <WhatsAppButton />
+        <PopupModal />
         <Toaster position="bottom-right" />
         
         {/* Google Analytics Script */}
