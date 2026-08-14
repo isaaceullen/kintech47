@@ -17,10 +17,6 @@ export default function PopupModal() {
 
   useEffect(() => {
     async function loadPopup() {
-      // Check if already seen in this session
-      const hasSeenPopup = sessionStorage.getItem('hasSeenPopup');
-      if (hasSeenPopup) return;
-
       const activePopups = await getActivePopups();
       if (!activePopups || activePopups.length === 0) return;
 
@@ -67,7 +63,6 @@ export default function PopupModal() {
       trackEvent('close_popup', { popup_title: popup.title });
     }
     setIsOpen(false);
-    sessionStorage.setItem('hasSeenPopup', 'true');
   };
 
   const handleButtonClick = () => {

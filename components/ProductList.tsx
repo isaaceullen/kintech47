@@ -109,6 +109,11 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
 
   // Apply sorting
   filteredProducts = filteredProducts.sort((a, b) => {
+    if (sortBy === 'in_stock_first') {
+      if (a.is_out_of_stock && !b.is_out_of_stock) return 1;
+      if (!a.is_out_of_stock && b.is_out_of_stock) return -1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
     if (sortBy === 'promo_first') {
       if (a.is_promo_active && !b.is_promo_active) return -1;
       if (!a.is_promo_active && b.is_promo_active) return 1;
@@ -289,6 +294,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
                 <option value="za">Ordenar de Z-A</option>
                 <option value="lowest_price">Menor Preço</option>
                 <option value="highest_price">Maior Preço</option>
+                <option value="in_stock_first">Esgotados por último</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-text-support">
                 <ChevronDown className="w-5 h-5" />

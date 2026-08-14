@@ -211,6 +211,7 @@ export default function AdminProductsClient({ initialProducts, initialDefaultSor
               <option value="za">Z-A</option>
               <option value="lowest_price">Menor Preço</option>
               <option value="highest_price">Maior Preço</option>
+              <option value="in_stock_first">Esgotados por último</option>
             </select>
           </div>
 
