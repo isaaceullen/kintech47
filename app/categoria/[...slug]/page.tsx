@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { getCategories } from '@/lib/api';
+import { getCatalog } from '@/lib/catalog';
+import { categoryPath, categoryLabel } from '@/lib/categories';
 import Navbar from '@/components/Navbar';
 import ProductList from '@/components/ProductList';
 import { notFound } from 'next/navigation';
@@ -10,9 +11,9 @@ interface CategoryPageProps {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const categories = await getCategories();
+  const { products, categories, defaultSort } = await getCatalog();
   const targetSlug = slug[slug.length - 1];
-  const category = categories.find(c => c.slug === targetSlug);
+  const category = categories.find(c => categoryPath(c, categories) === `/categoria/${slug.join('/')}`);
 
   if (!category) {
     return {
@@ -28,30 +29,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const categories = await getCategories();
+  const { products, categories, defaultSort } = await getCatalog();
   const targetSlug = slug[slug.length - 1];
-  const category = categories.find(c => c.slug === targetSlug);
+  const category = categories.find(c => categoryPath(c, categories) === `/categoria/${slug.join('/')}`);
 
   if (!category) {
     notFound();
-  }
-
-  let defaultSort = 'newest';
-  
-  try {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    const { data: settings } = await supabase
-      .from('dashboard_settings')
-      .select('default_catalog_sort')
-      .eq('id', 1)
-      .single();
-
-    if (settings && settings.default_catalog_sort) {
-      defaultSort = settings.default_catalog_sort;
-    }
-  } catch (error) {
-    console.error('Error fetching default sort:', error);
   }
 
   return (
@@ -63,7 +46,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             Produtos em: <span className="text-primary">{category.name}</span>
           </h1>
         </div>
-        <ProductList initialCategorySlug={targetSlug} initialSort={defaultSort} />
+        <ProductList initialProducts={products} initialCategories={categories} initialCategorySlug={targetSlug} initialSort={defaultSort} />
       </main>
     </>
   );

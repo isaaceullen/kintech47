@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { getCatalogProduct } from '@/lib/catalog';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -15,12 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sku: stri
   const { sku } = await params;
   
   try {
-    const supabase = await createClient();
-    const { data: product } = await supabase
-      .from('products')
-      .select('*')
-      .eq('sku', sku)
-      .single();
+    const product = await getCatalogProduct(sku);
 
     if (!product) {
       return {
@@ -29,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ sku: stri
     }
 
     const title = product.seo_title || product.name;
-    const description = product.seo_description || product.description.substring(0, 160);
+    const description = product.seo_description || (product.description || '').substring(0, 160);
 
     return {
       title: `${title} | Kintech47`,
@@ -49,44 +44,14 @@ export async function generateMetadata({ params }: { params: Promise<{ sku: stri
 
 export default async function ProductPage({ params }: { params: Promise<{ sku: string }> }) {
   const { sku } = await params;
-  let product = null;
-  let allProducts = [];
-  let productError = null;
-
-  try {
-    const supabase = await createClient();
-    
-    const { data: pData, error: pError } = await supabase
-      .from('products')
-      .select('*')
-      .eq('sku', sku)
-      .single();
-      
-    product = pData;
-    productError = pError;
-
-    if (!pError && pData) {
-      const { data: aData } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      allProducts = aData || [];
-    }
-  } catch (err) {
-    console.error('Supabase fetch error:', err);
-    // Fallback to mock data if Supabase fails
-    const { getProductBySku, getProducts } = await import('@/lib/api');
-    product = await getProductBySku(sku);
-    allProducts = await getProducts();
-  }
-
-  if (productError || !product) {
-    notFound();
-  }
-
-  const relatedProducts = (allProducts || [])
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const product = await getCatalogProduct(sku);
+  if (!product) notFound();
+  const supabase = await createClient();
+  const { data } = await supabase.from('products').select('*')
+    .eq('category', product.category).neq('id', product.id)
+    .or('is_active.eq.true,is_active.is.null')
+    .order('created_at', { ascending: false }).limit(4);
+  const relatedProducts = data || [];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -110,7 +75,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
     sku: product.sku,
     offers: {
       '@type': 'Offer',
-      url: `https://kintech47.com.br/${product.sku}`, // Replace with actual domain
+      url: `https://kintech47.vercel.app/${product.sku}`, // Replace with actual domain
       priceCurrency: 'BRL',
       price: finalPrice,
       availability: product.is_out_of_stock ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
@@ -121,7 +86,7 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
     <div className="min-h-screen flex flex-col">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\u003c') }}
       />
       <Navbar />
       <main className="flex-grow max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -153,10 +118,10 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
               <div className="flex flex-col gap-2">
                 {product.is_promo_active ? (
                   <>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="text-lg text-text-support line-through">{formatCurrency(product.pix_price)}</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="text-4xl font-bold text-primary">
                         {formatCurrency(
                           Math.max(0, product.discount_type === 'percentage' 
@@ -166,8 +131,8 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
                       </span>
                       <span className="text-text-support">no PIX</span>
                     </div>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <span className="text-xl text-text-main">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mt-2">
+                      <span className="text-lg text-text-main">
                         Em até 4x de {formatCurrency(Math.ceil(Math.max(0, product.discount_type === 'percentage' 
                             ? product.pix_price - (product.pix_price * ((product.discount_amount || 0) / 100))
                             : product.pix_price - (product.discount_amount || 0)) * 1.14) / 4)}
@@ -181,11 +146,11 @@ export default async function ProductPage({ params }: { params: Promise<{ sku: s
                   </>
                 ) : (
                   <>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="text-4xl font-bold text-success">{formatCurrency(product.pix_price)}</span>
                       <span className="text-text-support">no PIX</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span className="text-xl text-text-main">Em até 4x de {formatCurrency(product.card_price / 4)}</span>
                       <span className="text-text-support">sem juros no cartão (Total: {formatCurrency(product.card_price)})</span>
                     </div>

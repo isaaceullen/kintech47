@@ -50,7 +50,7 @@ export default function ProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <Link href={`/${product.sku}`} className="group flex flex-col bg-background-secondary rounded-xl overflow-hidden border border-background-tertiary hover:border-primary transition-colors duration-300 relative">
+    <Link prefetch={true} href={`/${product.sku}`} className="group flex flex-col bg-background-secondary rounded-2xl overflow-hidden border border-background-tertiary hover:border-primary/70 hover:shadow-xl hover:shadow-black/20 transition-[border-color,box-shadow] duration-200 relative">
       {product.is_out_of_stock && (
         <div className="absolute top-3 right-3 z-20 bg-danger text-white text-xs font-bold px-2 py-1 rounded">
           Esgotado
@@ -68,7 +68,8 @@ export default function ProductCard({ product }: { product: Product }) {
           src={getImageUrl(product)}
           alt={product.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 30vw, 260px"
+          className="object-contain p-3 group-hover:scale-[1.03] transition-transform duration-200 motion-reduce:transform-none"
           referrerPolicy="no-referrer"
         />
       </div>
@@ -103,6 +104,7 @@ export default function ProductCard({ product }: { product: Product }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                trackEvent('request_stock_notification', { product_name: product.name, sku: product.sku });
                 window.open(`https://wa.me/5547988692150?text=${encodeURIComponent(`Olá! Me avise quando o produto ${product.name} voltar ao estoque.`)}`, '_blank');
               }}
               className="mt-3 sm:mt-4 w-full flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-colors bg-accent hover:bg-accent/80 text-background-main cursor-pointer"
@@ -116,7 +118,7 @@ export default function ProductCard({ product }: { product: Product }) {
             >
               <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 block" />
               <span className="hidden sm:block">Adicionar</span>
-              <span className="block sm:hidden">Add</span>
+              <span className="block sm:hidden">Adicionar</span>
             </button>
           )}
         </div>

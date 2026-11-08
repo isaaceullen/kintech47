@@ -1,25 +1,29 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Product, Category } from '@/types/database';
-import { getProducts, getProductsByCategory, getCategories } from '@/lib/api';
+import { categoryLabel, categoryNames, categoryPath } from '@/lib/categories';
+import { useRouter } from 'next/navigation';
 import ProductCard from './ProductCard';
 import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
 interface ProductListProps {
+  initialProducts: Product[];
+  initialCategories: Category[];
   initialSort?: string;
   initialCategorySlug?: string;
 }
 
-export default function ProductList({ initialSort = 'newest', initialCategorySlug }: ProductListProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ProductList({ initialProducts, initialCategories, initialSort = 'newest', initialCategorySlug }: ProductListProps) {
+  const products = initialProducts;
+  const categories = initialCategories;
+  const loading = false;
+  const router = useRouter();
   
   // Filter states (Global for filtering logic)
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategories.find(c => c.slug === initialCategorySlug)?.name || 'all');
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>(initialSort);
@@ -32,24 +36,8 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
-      const categoriesData = await getCategories();
-      setCategories(categoriesData);
-
-      let productsData = [];
-      if (initialCategorySlug) {
-        productsData = await getProductsByCategory(initialCategorySlug);
-        const cat = categoriesData.find(c => c.slug === initialCategorySlug);
-        if (cat) setSelectedCategory(cat.name);
-      } else {
-        productsData = await getProducts();
-      }
-      
-      setProducts(productsData);
-      setLoading(false);
-    }
-    loadData();
-  }, [initialCategorySlug]);
+    setSelectedCategory(categories.find(c => c.slug === initialCategorySlug)?.name || 'all');
+  }, [initialCategorySlug, categories]);
 
   // Debounce for minPrice
   useEffect(() => {
@@ -77,7 +65,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
     setSortBy(initialSort);
     // If we're on a category page, reset URL
     if (window.location.pathname.startsWith('/categoria/')) {
-      window.location.href = '/';
+      router.push('/');
     }
   };
 
@@ -94,7 +82,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
       if (!matchesCategory) {
         const cat = categories.find(c => c.name === selectedCategory);
         if (cat) {
-          const subcatsNames = categories.filter(c => c.parent_id === cat.id).map(c => c.name);
+          const subcatsNames = categoryNames(cat, categories);
           matchesCategory = subcatsNames.includes(p.category);
         }
       }
@@ -146,7 +134,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
           {categories.filter(cat => !cat.parent_id).map(cat => (
             <div key={cat.id}>
               <Link
-                href={`/categoria/${cat.slug}`}
+                href={categoryPath(cat, categories)}
                 onClick={() => {
                   if (isMobile) setIsMobileFiltersOpen(false);
                 }}
@@ -160,13 +148,13 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
                   {categories.filter(subcat => subcat.parent_id === cat.id).map(subcat => (
                     <Link
                       key={subcat.id}
-                      href={`/categoria/${cat.slug}/${subcat.slug}`}
+                      href={categoryPath(subcat, categories)}
                       onClick={() => {
                         if (isMobile) setIsMobileFiltersOpen(false);
                       }}
                       className={`block w-full text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${selectedCategory === subcat.name ? 'bg-background-tertiary text-primary font-medium' : 'text-text-support hover:text-text-main hover:bg-background-main/50'}`}
                     >
-                      {subcat.name}
+                      {categoryLabel(subcat.name)}
                     </Link>
                   ))}
                 </div>
@@ -180,7 +168,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
       <div>
         <h3 className="text-lg font-bold text-text-main mb-4 border-b border-background-tertiary pb-2">Preço (PIX)</h3>
         <div className="flex items-center gap-2">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <label htmlFor={`min-price-${isMobile ? 'mobile' : 'desktop'}`} className="block text-xs text-text-support mb-1">A partir de R$</label>
             <input
               id={`min-price-${isMobile ? 'mobile' : 'desktop'}`}
@@ -257,7 +245,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {/* Top Bar: Search & Sort */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="flex-1 relative">
@@ -267,7 +255,8 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
             <input
               type="text"
               className="block w-full pl-10 pr-3 py-3 border border-background-tertiary rounded-lg leading-5 bg-background-secondary text-text-main placeholder-text-support focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors"
-              placeholder="Buscar produtos..."
+              aria-label="Buscar produtos"
+              placeholder="Qual fragrância você procura?"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -284,10 +273,12 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
             
             <div className="relative flex-shrink-0">
               <select
+                aria-label="Ordenar produtos"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="appearance-none w-full sm:w-48 pl-4 pr-10 py-3 bg-background-secondary border border-background-tertiary rounded-lg text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-colors cursor-pointer"
               >
+                <option value="in_stock_first">Disponíveis primeiro</option>
                 <option value="newest">Mais Recentes</option>
                 <option value="promo_first">Promoções Primeiro</option>
                 <option value="az">Ordenar de A-Z</option>
@@ -302,6 +293,7 @@ export default function ProductList({ initialSort = 'newest', initialCategorySlu
           </div>
         </div>
 
+        <p className="text-sm text-text-support mb-5" role="status">{filteredProducts.length} produtos encontrados</p>
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

@@ -85,7 +85,8 @@ export default function ProductGallery({
         src={item.url}
         alt={`${name} - Imagem`}
         fill
-        className="object-cover"
+        sizes="(max-width: 768px) 100vw, 650px"
+        className="object-contain p-4"
         referrerPolicy="no-referrer"
         priority
       />
@@ -114,6 +115,8 @@ export default function ProductGallery({
           {mediaItems.map((item, idx) => (
             <button 
               key={idx}
+              aria-label={`Ver mídia ${idx + 1} de ${name}`}
+              aria-pressed={currentIndex === idx}
               onClick={() => setCurrentIndex(idx)}
               className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${currentIndex === idx ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'} bg-background-secondary flex justify-center items-center`}
             >
@@ -128,7 +131,8 @@ export default function ProductGallery({
                   src={item.url}
                   alt={`${name} thumbnail ${idx + 1}`}
                   fill
-                  className="object-cover"
+                  sizes="80px"
+                  className="object-contain"
                   referrerPolicy="no-referrer"
                 />
               )}

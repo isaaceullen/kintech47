@@ -30,3 +30,15 @@
     @apply antialiased;
   }
 }
+
+.catalog-hero {
+  background: radial-gradient(ellipse at top right, #C5A05920, transparent 60%), linear-gradient(135deg, #14213D, #0B132B);
+}
+@layer base {
+  button, a, input, select { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+  button:not(:disabled), select { cursor: pointer; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

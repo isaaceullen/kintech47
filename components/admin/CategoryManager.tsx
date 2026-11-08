@@ -5,6 +5,7 @@ import { Trash2, Plus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { trackEvent } from '@/components/GoogleAnalytics';
 
 interface Category {
   id: string;
@@ -37,11 +38,14 @@ export default function CategoryManager({ initialCategories }: { initialCategori
     try {
       const supabase = createClient();
       
+      const parent = categories.find(c => c.id === parentId);
+      const name = parent ? `${parent.name} / ${newCategory.trim()}` : newCategory.trim();
+      trackEvent('create_category', { category_name: name });
       const { data, error } = await supabase
         .from('categories')
         .insert([{ 
-          name: newCategory.trim(),
-          slug: createSlug(newCategory),
+          name,
+          slug: createSlug(name),
           parent_id: parentId || null
         }])
         .select()
@@ -63,12 +67,21 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta categoria? As subcategorias também serão excluídas.')) return;
+    if (categories.some(c => c.parent_id === id)) {
+      toast.error('Exclua ou reorganize as subcategorias primeiro.');
+      return;
+    }
+    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
 
     setDeletingId(id);
     try {
       const supabase = createClient();
       
+      const category = categories.find(c => c.id === id);
+      const { count, error: countError } = await supabase.from('products').select('id', { count: 'exact', head: true }).eq('category', category?.name || '');
+      if (countError) throw countError;
+      if (count) { toast.error('Reclassifique os produtos desta categoria antes de excluir.'); return; }
+      trackEvent('delete_category', { category_name: category?.name });
       const { error } = await supabase
         .from('categories')
         .delete()
@@ -160,7 +173,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
             ))}
             {categories.length === 0 && (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-text-support">
+                <td colSpan={3} className="p-8 text-center text-text-support">
                   Nenhuma categoria cadastrada.
                 </td>
               </tr>
